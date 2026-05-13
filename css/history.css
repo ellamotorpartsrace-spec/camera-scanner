@@ -1,0 +1,141 @@
+/* Fullscreen layout */
+body {
+    padding: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+/* NEW: Style for the Count Badge */
+.count-pill {
+    display: inline-block;
+    background-color: var(--accent, #3b82f6);
+    /* Fallback blue if var missing */
+    color: white;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-left: 10px;
+    vertical-align: middle;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.filter-bar input,
+.filter-bar select,
+.filter-bar button,
+.filter-bar a {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-size: 0.85rem;
+}
+
+.filter-bar select {
+    background: var(--card);
+    cursor: pointer;
+    min-width: 140px;
+}
+
+.filter-bar button {
+    background: var(--accent);
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
+/* Table */
+.table-wrap {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: auto;
+    max-height: calc(100vh - 200px);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    min-width: 900px;
+    /* prevents column squish */
+}
+
+thead {
+    position: sticky;
+    top: 0;
+    background: var(--card);
+    z-index: 5;
+}
+
+th,
+td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+th {
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+}
+
+tr:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.badge-new {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.badge-dup {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.pg-btn {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.pg-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}

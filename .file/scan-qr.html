@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ELLA QR Scanner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
+    <link rel="stylesheet" href="css/scanner.css" />
+  </head>
+
+  <body>
+    <div
+      id="audioUnlock"
+      style="
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.95);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-size: 1.1rem;
+        text-align: center;
+        cursor: pointer;
+      "
+      onclick="unlockAudio()"
+    >
+      🔊 Tap to enable sound
+    </div>
+
+    <div class="container">
+      <div class="card">
+        <h2>📷 QR Scanner</h2>
+
+        <!-- Scanner Options -->
+        <div class="options-grid">
+          <div class="form-group full-width">
+            <label for="courierSelect">📦 Courier</label>
+            <select id="courierSelect">
+              <option value="">-- Select Courier --</option>
+              <option value="JNT Express">JNT Express</option>
+              <option value="LBC">LBC</option>
+              <option value="Shopee Express">Shopee Express</option>
+              <option value="Lazada Express">Lazada Express</option>
+              <option value="Flash Express">Flash Express</option>
+              <option value="Ninja Van">Ninja Van</option>
+              <option value="Others">Others</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="platformSelect">🛍️ Platform</label>
+            <select id="platformSelect">
+              <option value="">-- None --</option>
+              <option value="Lazada">Lazada</option>
+              <option value="TikTok">TikTok</option>
+              <option value="Shopee">Shopee</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="parcelSizeSelect">📏 Size</label>
+            <select id="parcelSizeSelect">
+              <option value="POUCH">Pouch</option>
+              <option value="BULKY">Bulky</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Camera -->
+        <div id="reader-wrapper">
+          <div id="reader"></div>
+          <div class="viewfinder qr"></div>
+        </div>
+
+        <!-- Status -->
+        <div id="status-pill">Ready to scan</div>
+
+        <!-- History -->
+        <section class="history">
+          <h3>
+            <span>📋 Recent Scans</span>
+          </h3>
+          <ul id="historyList" class="history-list">
+            <li class="placeholder">No scans yet</li>
+          </ul>
+        </section>
+
+        <div class="btn-group">
+          <button onclick="location.href = 'index.html'" class="secondary">
+            ⬅ Back
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flash Overlay -->
+    <div id="flash"></div>
+
+    <script>
+      function unlockAudio() {
+        if (window.Sound) {
+          // force audio context resume
+          document.body.dispatchEvent(new Event("click"));
+        }
+
+        const el = document.getElementById("audioUnlock");
+        if (el) el.remove();
+      }
+    </script>
+
+    <script src="js/sound.js"></script>
+    <script src="js/scanner-qr.js"></script>
+  </body>
+</html>
