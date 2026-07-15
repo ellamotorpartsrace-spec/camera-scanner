@@ -23,9 +23,6 @@ const CLR_DEFAULT = { stroke: "rgba(255,255,255,0.4)", fill: "transparent", text
 const ALL_FORMATS = [
   Html5QrcodeSupportedFormats.QR_CODE,
   Html5QrcodeSupportedFormats.CODE_128,
-  Html5QrcodeSupportedFormats.CODE_39,
-  Html5QrcodeSupportedFormats.CODE_93,
-  Html5QrcodeSupportedFormats.EAN_13,
 ];
 
 const QR_FORMAT_NAMES = new Set([
@@ -35,7 +32,7 @@ const QR_FORMAT_NAMES = new Set([
 
 /* ── BarcodeDetector format mapping ── */
 const BD_FORMATS = [
-  "qr_code", "code_128", "code_39", "code_93", "ean_13"
+  "qr_code", "code_128"
 ];
 
 /* ── STATE ── */
