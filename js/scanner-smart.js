@@ -21,19 +21,10 @@ const CLR_DEFAULT = { stroke: "rgba(255,255,255,0.4)", fill: "transparent", text
 
 /* ── SCAN FORMATS ── */
 const ALL_FORMATS = [
-  Html5QrcodeSupportedFormats.QR_CODE,
-  Html5QrcodeSupportedFormats.AZTEC,
-  Html5QrcodeSupportedFormats.DATA_MATRIX,
-  Html5QrcodeSupportedFormats.PDF_417,
   Html5QrcodeSupportedFormats.CODE_128,
   Html5QrcodeSupportedFormats.CODE_39,
   Html5QrcodeSupportedFormats.CODE_93,
   Html5QrcodeSupportedFormats.EAN_13,
-  Html5QrcodeSupportedFormats.EAN_8,
-  Html5QrcodeSupportedFormats.UPC_A,
-  Html5QrcodeSupportedFormats.UPC_E,
-  Html5QrcodeSupportedFormats.ITF,
-  Html5QrcodeSupportedFormats.CODABAR,
 ];
 
 const QR_FORMAT_NAMES = new Set([
@@ -43,10 +34,7 @@ const QR_FORMAT_NAMES = new Set([
 
 /* ── BarcodeDetector format mapping ── */
 const BD_FORMATS = [
-  "qr_code", "aztec", "data_matrix", "pdf417",
-  "code_128", "code_39", "code_93",
-  "ean_13", "ean_8", "upc_a", "upc_e",
-  "itf", "codabar",
+  "code_128", "code_39", "code_93", "ean_13"
 ];
 
 /* ── STATE ── */
@@ -126,10 +114,11 @@ async function initScanner() {
   window.scannerInstance = scannerInstance;
 
   const scanConfig = {
-    fps: 12,
+    fps: 30, // Increased for faster frame capture
     qrbox: (viewW, viewH) => {
       const w = viewW || 300, h = viewH || 200;
-      return { width: Math.round(w * 0.85), height: Math.round(h * 0.50) };
+      // Much wider box to easily capture long 1D shipping barcodes
+      return { width: Math.round(w * 0.95), height: Math.round(h * 0.60) };
     },
     disableFlip: true,
     formatsToSupport: ALL_FORMATS,
@@ -150,7 +139,7 @@ async function initScanner() {
 
     updateStatus("Starting camera stream...");
     await scannerInstance.start(
-      targetCamera,
+      targetCamera, // Using direct ID so browser manages resolution and focus best
       scanConfig,
       onDecoded
     );
@@ -244,6 +233,9 @@ function onDecoded(decodedText, decodedResult) {
   if (!isScanning) return;
   if (decodedText === lastValue) return;
 
+  // Anti-hallucination: Ignore random short noise detections (waybills are at least 6+ chars)
+  if (!decodedText || decodedText.trim().length < 6) return;
+
   const fmt = decodedResult?.result?.format?.formatName || "";
   const isQR = QR_FORMAT_NAMES.has(fmt);
 
@@ -310,7 +302,9 @@ async function handleScan(value, type) {
 
 function resumeScanner() {
   isScanning = true;
-  lastValue = null;
+  // Delay clearing lastValue to prevent infinite duplicate scan loops 
+  // if the camera is held over the same barcode.
+  setTimeout(() => { lastValue = null; }, 5000);
   updateStatus("Ready – point at a QR or barcode");
 }
 
