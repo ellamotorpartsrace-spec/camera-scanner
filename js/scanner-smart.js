@@ -260,8 +260,17 @@ async function handleScan(value, type) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: value, type, courier, platform, parcel_size: parcelSize, is_return: isReturn })
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    
+    let data;
+    try {
+      data = await res.json();
+    } catch(e) {
+      throw new Error(`Server returned HTTP ${res.status} without JSON.`);
+    }
+
+    if (!res.ok || data.status === "error") {
+      throw new Error(data.message || `HTTP ${res.status} Error`);
+    }
 
     scanCount++;
     updateCounterUI();
@@ -290,6 +299,7 @@ async function handleScan(value, type) {
     saveSession();
   } catch (err) {
     console.error(err);
+    alert("Database Error: " + err.message);
     flash("error");
     Sound.error();
     updateStatus("❌ Save failed");

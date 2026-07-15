@@ -63,7 +63,7 @@ try {
 
     foreach ($required_tables as $table) {
         try {
-            $stmt = $pdo->query("DESCRIBE `$table` LIMIT 1");
+            $stmt = $pdo->query("DESCRIBE `$table`");
             log_msg("✅ Table `<b>$table</b>` exists.");
         } catch (PDOException $e) {
             $missing_tables[] = $table;
