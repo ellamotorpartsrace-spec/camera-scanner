@@ -12,8 +12,8 @@ $is_authenticated = true;
 $stats = ['total' => 0, 'returned' => 0, 'platforms' => []];
 try {
   $today = date('Y-m-d');
-  $stmt = $pdo->prepare("SELECT COUNT(*) as total, SUM(returned_at IS NOT NULL) as returned FROM scans WHERE DATE(created_at) = :today");
-  $stmt->execute(['today' => $today]);
+  $stmt = $pdo->prepare("SELECT COUNT(*) as total, SUM(IF(returned_at IS NOT NULL AND returned_at > '2000-01-01', 1, 0)) as returned FROM scans WHERE DATE(scanned_at) = :today");
+  $stmt->execute([':today' => $today]);
   $row = $stmt->fetch();
   $stats['total'] = (int) ($row['total'] ?? 0);
   $stats['returned'] = (int) ($row['returned'] ?? 0);
