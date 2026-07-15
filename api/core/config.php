@@ -5,19 +5,25 @@
 
 return [
     'db' => [
-        // Local XAMPP Settings
+        // ==========================================
+        // LOCAL XAMPP SETTINGS (Currently disabled)
+        // ==========================================
+        /*
         'host' => 'localhost',
         'name' => 'ella_scanner',
         'user' => 'root',
-        'pass' => 'elladbPogisiBen',
-        'charset' => 'utf8mb4'
-
-        /* Production Settings (Hostinger)
-        'host' => '127.0.0.1',
-        'name' => 'u296077208_ella_scanner',
-        'user' => 'u296077208_BenzEllaScan',
-        'pass' => '6n%cY.-Zkr]C22.',
+        'pass' => '', 
+        'charset' => 'utf8mb4',
         */
+
+        // ==========================================
+        // PRODUCTION SETTINGS (Hostinger) - ACTIVE
+        // ==========================================
+        'host' => 'localhost', // Usually 'localhost' on Hostinger
+        'name' => 'u296077208_camera_scanner', // INPUT YOUR DB NAME HERE
+        'user' => 'u296077208_scanner', // INPUT YOUR DB USER HERE
+        'pass' => 'ella2002Scanner',         // INPUT YOUR DB PASSWORD HERE
+        'charset' => 'utf8mb4'
     ],
     'security' => [
         // Default password: 'ellamotors'
