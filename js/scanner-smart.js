@@ -46,6 +46,11 @@ let trackerRunning = false;
 let lastTrackTime = 0;
 let hasTrackerSupport = false;
 
+/* ── OFFLINE & BATCH ── */
+let isBatchMode = false;
+let batchQueue = [];
+let offlineQueue = [];
+
 /* ── COUNTERS ── */
 let scanCount = 0;
 let successScanCount = 0;
@@ -57,6 +62,7 @@ let bulkyCount = 0;
 ══════════════════════════════════════════ */
 window.addEventListener("load", () => {
   loadSession();
+  loadQueues();
   restoreCounterUI();
   // We no longer call initScanner here — it's called by unlockAudio() 
   // on a user gesture to satisfy mobile browser security.
@@ -71,9 +77,30 @@ window.addEventListener("load", () => {
     });
   }
 
+  // Batch mode toggle
+  const batchToggle = document.getElementById("batchModeToggle");
+  const bText = document.getElementById("batchModeText");
+  const batchAction = document.getElementById("batch-action-container");
+  if (batchToggle && bText) {
+    batchToggle.addEventListener("change", () => {
+      isBatchMode = batchToggle.checked;
+      bText.innerText = isBatchMode ? "Batch: ON" : "Batch: OFF";
+      if (batchAction) batchAction.style.display = isBatchMode ? "block" : "none";
+    });
+  }
+
+  // Submit Batch Button
+  const submitBtn = document.getElementById("submitBatchBtn");
+  if (submitBtn) submitBtn.addEventListener("click", submitBatch);
+
   // Clear session
   const clearBtn = document.getElementById("clearSessionBtn");
   if (clearBtn) clearBtn.addEventListener("click", clearSession);
+
+  // Network Status
+  window.addEventListener("online", handleOnline);
+  window.addEventListener("offline", handleOffline);
+  handleOffline(); // Check initial state
 });
 
 /* ══════════════════════════════════════════
@@ -235,6 +262,13 @@ function onDecoded(decodedText, decodedResult) {
   // Anti-hallucination: Ignore random short noise detections (waybills are at least 6+ chars)
   if (!decodedText || decodedText.trim().length < 6) return;
 
+  // IMPORTANT: Ignore URLs to prevent "double waybill" bugs!
+  // Many waybills (J&T, Shopee) have a QR code containing a URL, and a Barcode containing the tracking number.
+  // If the scanner sees both, it will scan twice. Since we only want tracking numbers, we ignore URLs.
+  if (decodedText.toLowerCase().startsWith("http://") || decodedText.toLowerCase().startsWith("https://")) {
+    return;
+  }
+
   const fmt = decodedResult?.result?.format?.formatName || "";
   const isQR = QR_FORMAT_NAMES.has(fmt);
 
@@ -256,11 +290,58 @@ async function handleScan(value, type) {
     const parcelSize = document.getElementById("parcelSizeSelect")?.value || "POUCH";
     const isReturn = document.getElementById("returnModeToggle")?.checked || false;
 
-    const res = await fetch(API_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: value, type, courier, platform, parcel_size: parcelSize, is_return: isReturn })
+    const scanData = { code: value, type, courier, platform, parcel_size: parcelSize, is_return: isReturn };
+
+    // Strict duplicate check against session history to prevent double-scanning
+    // the same waybill if it has both a QR and a Barcode (or just rescanning)
+    let isLocalDuplicate = false;
+    const historyList = document.querySelectorAll('.history-code');
+    historyList.forEach(item => {
+      if (item.innerText === value) isLocalDuplicate = true;
     });
+
+    if (isLocalDuplicate) {
+      flash("duplicate");
+      Sound.duplicate();
+      updateStatus("⚠️ Duplicate – already scanned");
+      setTimeout(resumeScanner, 1500);
+      return;
+    }
+
+    if (isBatchMode) {
+      batchQueue.push(scanData);
+      saveQueues();
+      scanCount++;
+      updateCounterUI();
+      flash("success");
+      Sound.success();
+      updateStatus(`📦 Added to Batch (${batchQueue.length})`);
+      pushHistory(value, type, false, { timestamp: new Date().toISOString() });
+      setTimeout(resumeScanner, 1200); // Increased from 500ms to give time to move parcel away
+      return;
+    }
+
+    let res;
+    try {
+      res = await fetch(API_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(scanData)
+      });
+    } catch(fetchErr) {
+      // Network Error (Offline)
+      offlineQueue.push(scanData);
+      saveQueues();
+      scanCount++;
+      updateCounterUI();
+      flash("warning");
+      Sound.success();
+      updateStatus(`⚠️ Saved Offline (${offlineQueue.length} pending)`);
+      pushHistory(value, type, false, { timestamp: new Date().toISOString() });
+      handleOffline(); // update banner
+      setTimeout(resumeScanner, 500);
+      return;
+    }
     
     let data;
     try {
@@ -714,4 +795,120 @@ function formatDateTime(ts) {
   if (!ts) return "-";
   const d = new Date(ts);
   return isNaN(d) ? "-" : d.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+/* ══════════════════════════════════════════
+   BATCH & OFFLINE QUEUE LOGIC
+══════════════════════════════════════════ */
+function loadQueues() {
+  try {
+    const b = sessionStorage.getItem("smartBatchQueue");
+    if (b) batchQueue = JSON.parse(b) || [];
+    const o = localStorage.getItem("smartOfflineQueue");
+    if (o) offlineQueue = JSON.parse(o) || [];
+  } catch(e) {}
+  updateBatchUI();
+}
+
+function saveQueues() {
+  sessionStorage.setItem("smartBatchQueue", JSON.stringify(batchQueue));
+  localStorage.setItem("smartOfflineQueue", JSON.stringify(offlineQueue));
+  updateBatchUI();
+}
+
+function updateBatchUI() {
+  const bCount = document.getElementById("batch-submit-count");
+  if (bCount) bCount.innerText = batchQueue.length;
+  
+  const oBanner = document.getElementById("offline-banner");
+  const oCount = document.getElementById("offline-count");
+  if (oBanner && oCount) {
+    if (offlineQueue.length > 0) {
+      oCount.innerText = offlineQueue.length;
+      oBanner.style.display = "block";
+    } else {
+      oBanner.style.display = (!navigator.onLine) ? "block" : "none";
+      oCount.innerText = "0";
+    }
+  }
+}
+
+function handleOffline() {
+  updateBatchUI();
+}
+
+function handleOnline() {
+  updateBatchUI();
+  if (offlineQueue.length > 0) {
+    syncOfflineQueue();
+  }
+}
+
+async function submitBatch() {
+  if (batchQueue.length === 0) {
+    alert("Batch is empty!");
+    return;
+  }
+  
+  const submitBtn = document.getElementById("submitBatchBtn");
+  if (submitBtn) submitBtn.innerText = "🚀 Uploading...";
+
+  try {
+    const res = await fetch("api/scan/save_batch.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scans: batchQueue })
+    });
+    
+    let data;
+    try { data = await res.json(); } catch(e) { throw new Error(`Server returned HTTP ${res.status} without JSON`); }
+    
+    if (!res.ok || data.status === "error") throw new Error(data.message || "Batch upload failed");
+
+    const r = data.results;
+    alert(`Batch Complete!\n\nSaved: ${r.saved}\nDuplicates: ${r.duplicates}\nErrors: ${r.errors}`);
+    
+    successScanCount += r.saved;
+    updateCounterUI();
+    
+    batchQueue = [];
+    saveQueues();
+  } catch (err) {
+    console.error(err);
+    alert("Batch Upload Error: " + err.message);
+  } finally {
+    if (submitBtn) submitBtn.innerHTML = `🚀 Submit Batch (<span id="batch-submit-count">${batchQueue.length}</span>)`;
+    updateBatchUI();
+  }
+}
+
+async function syncOfflineQueue() {
+  if (offlineQueue.length === 0) return;
+  
+  updateStatus(`Syncing ${offlineQueue.length} offline scans...`);
+  const scansToSync = [...offlineQueue];
+  
+  try {
+    const res = await fetch("api/scan/save_batch.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scans: scansToSync })
+    });
+    
+    let data;
+    try { data = await res.json(); } catch(e) { throw new Error("Offline Sync JSON Error"); }
+    if (!res.ok || data.status === "error") throw new Error(data.message || "Offline sync failed");
+    
+    const r = data.results;
+    successScanCount += r.saved;
+    updateCounterUI();
+    
+    offlineQueue = [];
+    saveQueues();
+    updateStatus("✅ Offline Scans Synced");
+    setTimeout(() => updateStatus("Ready – point at a QR or barcode"), 3000);
+  } catch(err) {
+    console.error("Offline sync failed, will retry later.", err);
+    updateStatus("⚠️ Sync Failed - will retry");
+  }
 }

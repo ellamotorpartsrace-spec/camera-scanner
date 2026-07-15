@@ -311,15 +311,27 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
         Automatically detects QR codes &amp; barcodes
       </p>
 
-      <!-- Return Mode Toggle -->
-      <div class="mode-selection">
-        <label class="switch-label" for="returnModeToggle">
-          <div class="switch">
-            <input type="checkbox" id="returnModeToggle">
-            <span class="slider"></span>
-          </div>
-          <span id="modeText" class="mode-text">Normal Mode</span>
-        </label>
+      <!-- Mode Toggles -->
+      <div style="display: flex; gap: 10px; margin-bottom: 1.25rem;">
+        <div class="mode-selection" style="flex:1; margin-bottom: 0;">
+          <label class="switch-label" for="returnModeToggle" style="justify-content: center;">
+            <div class="switch">
+              <input type="checkbox" id="returnModeToggle">
+              <span class="slider"></span>
+            </div>
+            <span id="modeText" class="mode-text">Normal</span>
+          </label>
+        </div>
+        
+        <div class="mode-selection" style="flex:1; margin-bottom: 0;">
+          <label class="switch-label" for="batchModeToggle" style="justify-content: center;">
+            <div class="switch">
+              <input type="checkbox" id="batchModeToggle">
+              <span class="slider"></span>
+            </div>
+            <span id="batchModeText" class="mode-text">Batch: OFF</span>
+          </label>
+        </div>
       </div>
 
       <!-- Shared Options -->
@@ -351,6 +363,11 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             <option value="BULKY">Bulky</option>
           </select>
         </div>
+      </div>
+
+      <!-- Offline Banner -->
+      <div id="offline-banner" style="display: none; background: #ef4444; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-weight: bold; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); animation: pulse 2s infinite;">
+        ⚠️ OFFLINE: <span id="offline-count">0</span> scans queued
       </div>
 
       <!-- Camera Area -->
@@ -398,6 +415,13 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
         </ul>
       </section>
 
+      <!-- Batch Action -->
+      <div id="batch-action-container" style="display: none; margin-top: 15px;">
+        <button id="submitBatchBtn" style="width: 100%; background: #3b82f6; color: white; border: none; padding: 15px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);">
+          🚀 Submit Batch (<span id="batch-submit-count">0</span>)
+        </button>
+      </div>
+
       <!-- Footer -->
       <div class="btn-group" style="margin-top:1.5rem;">
         <button onclick="location.href='index.php'" class="secondary">⬅ Back</button>
@@ -425,7 +449,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
   </script>
 
   <script src="js/sound.js"></script>
-  <script src="js/scanner-smart.js?v=4"></script>
+  <script src="js/scanner-smart.js?v=6"></script>
 </body>
 
 </html>
