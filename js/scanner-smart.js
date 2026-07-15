@@ -21,6 +21,7 @@ const CLR_DEFAULT = { stroke: "rgba(255,255,255,0.4)", fill: "transparent", text
 
 /* ── SCAN FORMATS ── */
 const ALL_FORMATS = [
+  Html5QrcodeSupportedFormats.QR_CODE,
   Html5QrcodeSupportedFormats.CODE_128,
   Html5QrcodeSupportedFormats.CODE_39,
   Html5QrcodeSupportedFormats.CODE_93,
@@ -34,7 +35,7 @@ const QR_FORMAT_NAMES = new Set([
 
 /* ── BarcodeDetector format mapping ── */
 const BD_FORMATS = [
-  "code_128", "code_39", "code_93", "ean_13"
+  "qr_code", "code_128", "code_39", "code_93", "ean_13"
 ];
 
 /* ── STATE ── */
@@ -126,20 +127,19 @@ async function initScanner() {
   };
 
   try {
-    // 4. Trigger permission prompt by listing cameras first
-    const devices = await Html5Qrcode.getCameras();
-    if (!devices || devices.length === 0) {
-      throw { name: "NotFoundError" };
-    }
-
-    // Try to find the back camera (environment)
-    let targetCamera = devices[0].id;
-    const backCam = devices.find(d => d.label.toLowerCase().includes("back") || d.label.toLowerCase().includes("environment"));
-    if (backCam) targetCamera = backCam.id;
-
     updateStatus("Starting camera stream...");
+    
+    // Requesting HD resolution is critical for laser-like 1D barcode accuracy.
+    // We let the device pick the primary back camera via facingMode, which avoids 
+    // picking ultrawide lenses (that lack autofocus) by accident.
+    const cameraConfig = {
+      facingMode: "environment",
+      width: { ideal: 1920, min: 1280 },
+      height: { ideal: 1080, min: 720 }
+    };
+
     await scannerInstance.start(
-      targetCamera, // Using direct ID so browser manages resolution and focus best
+      cameraConfig,
       scanConfig,
       onDecoded
     );
@@ -213,9 +213,10 @@ function applyAdvancedCamera() {
       constraints.focusMode = "continuous";
     }
 
-    // Slight zoom (1.3-1.8x) makes barcode lines thicker in the frame
+    // Slight zoom (2.0x) makes barcode lines thicker in the frame,
+    // dramatically improving 1D barcode accuracy just like native apps do.
     if (caps.zoom) {
-      const targetZoom = Math.min(caps.zoom.max, Math.max(caps.zoom.min, 1.5));
+      const targetZoom = Math.min(caps.zoom.max, Math.max(caps.zoom.min, 2.0));
       constraints.zoom = targetZoom;
     }
 

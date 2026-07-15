@@ -144,6 +144,26 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
       z-index: 5;
     }
 
+    /* Laser Line */
+    .laser-line {
+      position: absolute;
+      left: 10%;
+      width: 80%;
+      height: 2px;
+      background: #ef4444;
+      box-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444;
+      top: 50%;
+      z-index: 6;
+      animation: scan-laser 2.5s infinite alternate ease-in-out;
+      pointer-events: none;
+      opacity: 0.75;
+    }
+
+    @keyframes scan-laser {
+      0% { top: 20%; }
+      100% { top: 80%; }
+    }
+
     /* Fallback static guide (when BarcodeDetector not available) */
     .fallback-guide {
       position: absolute;
@@ -334,8 +354,9 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
       </div>
 
       <!-- Camera Area -->
-      <div id="reader-wrapper">
+      <div id="reader-wrapper" style="position: relative; overflow: hidden; border-radius: 14px;">
         <div id="reader"></div>
+        <div class="laser-line"></div>
         <canvas id="tracker-canvas"></canvas>
         <!-- Fallback guide for browsers without BarcodeDetector -->
         <div id="fallbackGuide" class="fallback-guide" style="display:none;">
