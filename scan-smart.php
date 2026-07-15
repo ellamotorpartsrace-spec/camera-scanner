@@ -373,12 +373,14 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
       <!-- Camera Area -->
       <div id="reader-wrapper" style="position: relative; overflow: hidden; border-radius: 14px;">
         <div id="reader"></div>
-        <div class="laser-line"></div>
-        <canvas id="tracker-canvas"></canvas>
-        <!-- Fallback guide for browsers without BarcodeDetector -->
-        <div id="fallbackGuide" class="fallback-guide" style="display:none;">
-          <div class="guide-box"></div>
-          <div class="guide-label">Point at code</div>
+        
+        <!-- Fallback Static Guide (Now permanently used for maximum FPS) -->
+        <div id="fallbackGuide" class="fallback-guide" style="display:flex;">
+          <div class="bracket tl"></div>
+          <div class="bracket tr"></div>
+          <div class="bracket bl"></div>
+          <div class="bracket br"></div>
+          <div class="laser-line"></div>
         </div>
       </div>
 
@@ -449,7 +451,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
   </script>
 
   <script src="js/sound.js"></script>
-  <script src="js/scanner-smart.js?v=6"></script>
+  <script src="js/scanner-smart.js?v=7"></script>
 </body>
 
 </html>

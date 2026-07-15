@@ -4,6 +4,7 @@
  */
 
 $session_lifetime = 30 * 24 * 60 * 60; // 30 Days
+date_default_timezone_set('Asia/Manila'); // Force Philippine Time
 ini_set('session.gc_maxlifetime', $session_lifetime);
 ini_set('session.cookie_lifetime', $session_lifetime);
 

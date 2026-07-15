@@ -41,11 +41,6 @@ let isScanning = false;
 let lastValue = null;
 let snapTimer = null;
 
-let barcodeDetector = null;
-let trackerRunning = false;
-let lastTrackTime = 0;
-let hasTrackerSupport = false;
-
 /* ── OFFLINE & BATCH ── */
 let isBatchMode = false;
 let batchQueue = [];
@@ -179,7 +174,8 @@ function finalizeStart() {
   isScanning = true;
   updateStatus("Ready – point at a QR or barcode");
   applyAdvancedCamera();
-  initTracker(); // Restart the visual tracker
+  // Permanently show the static guide since the visual tracker is removed for performance
+  showFallbackGuide();
 }
 
 function handleCameraError(err) {
@@ -399,277 +395,12 @@ function resumeScanner() {
 }
 
 /* ══════════════════════════════════════════
-   BARCODEDETECTOR TRACKER (visual overlay)
+   UI HELPERS
 ══════════════════════════════════════════ */
-function initTracker() {
-  if (!("BarcodeDetector" in window)) {
-    console.log("BarcodeDetector not available – using fallback guide");
-    hasTrackerSupport = false;
-    showFallbackGuide();
-    return;
-  }
-
-  // Check which formats are actually supported
-  BarcodeDetector.getSupportedFormats().then(supported => {
-    const usable = BD_FORMATS.filter(f => supported.includes(f));
-    if (usable.length === 0) {
-      hasTrackerSupport = false;
-      showFallbackGuide();
-      return;
-    }
-
-    barcodeDetector = new BarcodeDetector({ formats: usable });
-    hasTrackerSupport = true;
-    trackerRunning = true;
-    requestAnimationFrame(trackLoop);
-  }).catch(() => {
-    hasTrackerSupport = false;
-    showFallbackGuide();
-  });
-}
-
-function trackLoop(timestamp) {
-  if (!trackerRunning) return;
-
-  // Throttle to TRACK_FPS
-  if (timestamp - lastTrackTime < TRACK_MS) {
-    requestAnimationFrame(trackLoop);
-    return;
-  }
-  lastTrackTime = timestamp;
-
-  // Find the video element html5-qrcode creates
-  const video = document.querySelector("#reader video");
-  if (!video || video.readyState < 2) {
-    requestAnimationFrame(trackLoop);
-    return;
-  }
-
-  barcodeDetector.detect(video).then(codes => {
-    drawTrackerOverlay(codes, video);
-  }).catch(() => {
-    // Ignore occasional detection errors
-  });
-
-  requestAnimationFrame(trackLoop);
-}
-
-function drawTrackerOverlay(codes, video) {
-  const canvas = document.getElementById("tracker-canvas");
-  if (!canvas) return;
-
-  const wrapper = document.getElementById("reader-wrapper");
-  const wrapW = wrapper.offsetWidth;
-  const wrapH = wrapper.offsetHeight;
-
-  // Match canvas pixel size to wrapper size
-  if (canvas.width !== wrapW || canvas.height !== wrapH) {
-    canvas.width = wrapW;
-    canvas.height = wrapH;
-  }
-
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, wrapW, wrapH);
-
-  if (!codes || codes.length === 0) return;
-
-  // The video's intrinsic size vs displayed size
-  const vidW = video.videoWidth;
-  const vidH = video.videoHeight;
-  if (!vidW || !vidH) return;
-
-  // html5-qrcode uses object-fit: cover on the video — compute the mapping
-  const vidAspect = vidW / vidH;
-  const wrapAspect = wrapW / wrapH;
-
-  let sx, sy, sw, sh;
-  if (vidAspect > wrapAspect) {
-    // Video is wider – cropped left/right
-    sh = vidH;
-    sw = vidH * wrapAspect;
-    sx = (vidW - sw) / 2;
-    sy = 0;
-  } else {
-    // Video is taller – cropped top/bottom
-    sw = vidW;
-    sh = vidW / wrapAspect;
-    sx = 0;
-    sy = (vidH - sh) / 2;
-  }
-
-  // Map video coords → wrapper coords
-  const mapX = (vx) => ((vx - sx) / sw) * wrapW;
-  const mapY = (vy) => ((vy - sy) / sh) * wrapH;
-
-  for (const code of codes) {
-    const isQR = QR_FORMAT_NAMES.has(code.format);
-    const clr = isQR ? CLR_QR : CLR_BARCODE;
-    const label = isQR ? "QR" : "BARCODE";
-
-    // Update the badge in header
-    updateBadge(isQR ? "qr" : "barcode");
-
-    if (code.cornerPoints && code.cornerPoints.length >= 4) {
-      // Draw using cornerPoints (allows for perspective/rotation)
-      drawPolygon(ctx, code.cornerPoints, sx, sy, sw, sh, wrapW, wrapH, clr, label);
-    } else if (code.boundingBox) {
-      // Draw using boundingBox (axis-aligned rectangle)
-      const bb = code.boundingBox;
-      const x = mapX(bb.x);
-      const y = mapY(bb.y);
-      const w = (bb.width / sw) * wrapW;
-      const h = (bb.height / sh) * wrapH;
-      drawRect(ctx, x, y, w, h, clr, label);
-    }
-  }
-}
-
-function drawPolygon(ctx, points, sx, sy, sw, sh, wrapW, wrapH, clr, label) {
-  const mapX = (vx) => ((vx - sx) / sw) * wrapW;
-  const mapY = (vy) => ((vy - sy) / sh) * wrapH;
-
-  const mapped = points.map(p => ({ x: mapX(p.x), y: mapY(p.y) }));
-
-  // Glow effect
-  ctx.shadowColor = clr.glow;
-  ctx.shadowBlur = 15;
-
-  // Fill
-  ctx.beginPath();
-  ctx.moveTo(mapped[0].x, mapped[0].y);
-  for (let i = 1; i < mapped.length; i++) ctx.lineTo(mapped[i].x, mapped[i].y);
-  ctx.closePath();
-  ctx.fillStyle = clr.fill;
-  ctx.fill();
-
-  // Stroke
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = clr.stroke;
-  ctx.stroke();
-
-  // Corner brackets
-  ctx.shadowBlur = 0;
-  const bracketLen = 14;
-  const bracketW = 4;
-  ctx.strokeStyle = clr.stroke;
-  ctx.lineWidth = bracketW;
-  ctx.lineCap = "round";
-
-  for (let i = 0; i < mapped.length; i++) {
-    const curr = mapped[i];
-    const prev = mapped[(i - 1 + mapped.length) % mapped.length];
-    const next = mapped[(i + 1) % mapped.length];
-
-    // Direction toward prev
-    const dp = normalise(prev.x - curr.x, prev.y - curr.y);
-    // Direction toward next
-    const dn = normalise(next.x - curr.x, next.y - curr.y);
-
-    ctx.beginPath();
-    ctx.moveTo(curr.x + dp.x * bracketLen, curr.y + dp.y * bracketLen);
-    ctx.lineTo(curr.x, curr.y);
-    ctx.lineTo(curr.x + dn.x * bracketLen, curr.y + dn.y * bracketLen);
-    ctx.stroke();
-  }
-
-  // Label
-  const cx = mapped.reduce((s, p) => s + p.x, 0) / mapped.length;
-  const minY = Math.min(...mapped.map(p => p.y));
-  drawLabel(ctx, label, cx, minY - 10, clr);
-}
-
-function drawRect(ctx, x, y, w, h, clr, label) {
-  const pad = 8;
-  const rx = x - pad;
-  const ry = y - pad;
-  const rw = w + pad * 2;
-  const rh = h + pad * 2;
-  const r = 8;
-
-  // Glow
-  ctx.shadowColor = clr.glow;
-  ctx.shadowBlur = 15;
-
-  // Fill
-  ctx.fillStyle = clr.fill;
-  roundRect(ctx, rx, ry, rw, rh, r);
-  ctx.fill();
-
-  // Stroke
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = clr.stroke;
-  roundRect(ctx, rx, ry, rw, rh, r);
-  ctx.stroke();
-
-  // Corner brackets
-  ctx.shadowBlur = 0;
-  const bl = 16;
-  ctx.lineWidth = 4;
-  ctx.lineCap = "round";
-  ctx.strokeStyle = clr.stroke;
-
-  // TL
-  ctx.beginPath(); ctx.moveTo(rx, ry + bl); ctx.lineTo(rx, ry + r); ctx.arcTo(rx, ry, rx + r, ry, r); ctx.lineTo(rx + bl, ry); ctx.stroke();
-  // TR
-  ctx.beginPath(); ctx.moveTo(rx + rw - bl, ry); ctx.lineTo(rx + rw - r, ry); ctx.arcTo(rx + rw, ry, rx + rw, ry + r, r); ctx.lineTo(rx + rw, ry + bl); ctx.stroke();
-  // BL
-  ctx.beginPath(); ctx.moveTo(rx, ry + rh - bl); ctx.lineTo(rx, ry + rh - r); ctx.arcTo(rx, ry + rh, rx + r, ry + rh, r); ctx.lineTo(rx + bl, ry + rh); ctx.stroke();
-  // BR
-  ctx.beginPath(); ctx.moveTo(rx + rw, ry + rh - bl); ctx.lineTo(rx + rw, ry + rh - r); ctx.arcTo(rx + rw, ry + rh, rx + rw - r, ry + rh, r); ctx.lineTo(rx + rw - bl, ry + rh); ctx.stroke();
-
-  // Label
-  drawLabel(ctx, label, rx + rw / 2, ry - 10, clr);
-}
-
-function drawLabel(ctx, text, cx, y, clr) {
-  ctx.shadowBlur = 0;
-  ctx.font = "bold 11px system-ui, sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "bottom";
-
-  const tm = ctx.measureText(text);
-  const pw = 10, ph = 4;
-  const bw = tm.width + pw * 2;
-  const bh = 18;
-
-  // Background pill
-  ctx.fillStyle = "rgba(0,0,0,0.55)";
-  roundRect(ctx, cx - bw / 2, y - bh, bw, bh, 6);
-  ctx.fill();
-
-  // Text
-  ctx.fillStyle = clr.text;
-  ctx.fillText(text, cx, y - ph);
-}
-
-/* ── Canvas Helpers ── */
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.arcTo(x + w, y, x + w, y + r, r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-  ctx.lineTo(x + r, y + h);
-  ctx.arcTo(x, y + h, x, y + h - r, r);
-  ctx.lineTo(x, y + r);
-  ctx.arcTo(x, y, x + r, y, r);
-  ctx.closePath();
-}
-
-function normalise(dx, dy) {
-  const len = Math.sqrt(dx * dx + dy * dy) || 1;
-  return { x: dx / len, y: dy / len };
-}
-
 function showFallbackGuide() {
   const guide = document.getElementById("fallbackGuide");
   if (guide) guide.style.display = "flex";
 }
-
-/* ══════════════════════════════════════════
-   UI HELPERS
-══════════════════════════════════════════ */
 function updateBadge(mode) {
   const badge = document.getElementById("type-badge");
   if (!badge) return;
@@ -771,20 +502,21 @@ function pushHistory(value, type, duplicate = false, data = {}) {
   li.className = `history-item ${duplicate ? "duplicate" : "new"}`;
   li.style.borderLeftColor = borderCol;
   li.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">
-      <div class="history-code" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${value}</div>
-      <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">
-        <span class="type-chip ${chipClass}">${chipLabel}</span>
-        <span class="history-badge ${duplicate ? 'dup' : 'new'}">
-          ${returnedAt ? "RETURNED" : duplicate ? `${scanCt + 1}×` : "NEW"}
-        </span>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="history-code" style="font-size:1.1rem;font-weight:800;letter-spacing:0.5px;color:var(--text);word-break:break-all;line-height:1.2;">
+        ${value}
       </div>
-    </div>
-    <div class="history-meta">
-      <span>🟢 First: ${formatDateTime(createdAt)}</span>
-      ${returnedAt
-      ? `<span>🟠 Returned: ${formatDateTime(returnedAt)}</span>`
-      : `<span>🔄 Last: ${formatDateTime(lastScan)}</span>`}
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="type-chip ${chipClass}">${chipLabel}</span>
+          <span class="history-badge ${duplicate ? 'dup' : 'new'}" style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(0,0,0,0.05);">
+            ${returnedAt ? "RETURNED" : duplicate ? `${scanCt + 1}× DUP` : "NEW"}
+          </span>
+        </div>
+        <div style="font-size:0.75rem;color:var(--muted);font-weight:600;">
+          🕒 ${formatDateTime(lastScan || createdAt)}
+        </div>
+      </div>
     </div>
   `;
   list.prepend(li);
