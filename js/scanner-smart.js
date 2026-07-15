@@ -127,12 +127,13 @@ async function initScanner() {
     updateStatus("Starting camera stream...");
     
     // Requesting HD resolution is critical for laser-like 1D barcode accuracy.
-    // We let the device pick the primary back camera via facingMode, which avoids 
-    // picking ultrawide lenses (that lack autofocus) by accident.
+    // We let the device pick the primary back camera via facingMode.
+    // IMPORTANT: We only use "ideal", never "min", because "min" constraints 
+    // will crash the camera and prevent it from opening on many mobile browsers.
     const cameraConfig = {
       facingMode: "environment",
-      width: { ideal: 1920, min: 1280 },
-      height: { ideal: 1080, min: 720 }
+      width: { ideal: 1920 },
+      height: { ideal: 1080 }
     };
 
     await scannerInstance.start(
