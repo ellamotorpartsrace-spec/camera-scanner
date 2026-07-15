@@ -124,20 +124,20 @@ async function initScanner() {
   };
 
   try {
-    updateStatus("Starting camera stream...");
-    
-    // Requesting HD resolution is critical for laser-like 1D barcode accuracy.
-    // We let the device pick the primary back camera via facingMode.
-    // IMPORTANT: We only use "ideal", never "min", because "min" constraints 
-    // will crash the camera and prevent it from opening on many mobile browsers.
-    const cameraConfig = {
-      facingMode: "environment",
-      width: { ideal: 1920 },
-      height: { ideal: 1080 }
-    };
+    // 4. Trigger permission prompt by listing cameras first
+    const devices = await Html5Qrcode.getCameras();
+    if (!devices || devices.length === 0) {
+      throw { name: "NotFoundError" };
+    }
 
+    // Try to find the back camera (environment)
+    let targetCamera = devices[0].id;
+    const backCam = devices.find(d => d.label.toLowerCase().includes("back") || d.label.toLowerCase().includes("environment"));
+    if (backCam) targetCamera = backCam.id;
+
+    updateStatus("Starting camera stream...");
     await scannerInstance.start(
-      cameraConfig,
+      targetCamera, // Using direct ID so browser manages resolution and focus best
       scanConfig,
       onDecoded
     );
