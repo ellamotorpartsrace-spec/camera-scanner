@@ -374,6 +374,11 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
       <div id="reader-wrapper" style="position: relative; overflow: hidden; border-radius: 14px;">
         <div id="reader"></div>
         
+        <!-- Flashlight Button -->
+        <button id="torchBtn" onclick="toggleTorch()" style="position: absolute; bottom: 15px; right: 15px; z-index: 50; background: rgba(0,0,0,0.6); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: 0.3s;" title="Toggle Flashlight">
+          🔦
+        </button>
+
         <!-- Fallback Static Guide (Now permanently used for maximum FPS) -->
         <div id="fallbackGuide" class="fallback-guide" style="display:flex;">
           <div class="bracket tl"></div>
@@ -451,7 +456,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
   </script>
 
   <script src="js/sound.js"></script>
-  <script src="js/scanner-smart.js?v=7"></script>
+  <script src="js/scanner-smart.js?v=8"></script>
 </body>
 
 </html>

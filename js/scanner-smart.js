@@ -99,8 +99,32 @@ window.addEventListener("load", () => {
 });
 
 /* ══════════════════════════════════════════
-   HTML5-QRCODE SCANNER (decode + save)
+   CAMERA / SCANNER INIT
 ══════════════════════════════════════════ */
+let isTorchOn = false;
+
+function toggleTorch() {
+  if (!scannerInstance) return;
+  
+  isTorchOn = !isTorchOn;
+  const btn = document.getElementById("torchBtn");
+  
+  try {
+    scannerInstance.applyVideoConstraints({
+      advanced: [{ torch: isTorchOn }]
+    }).then(() => {
+      if (btn) btn.style.background = isTorchOn ? "rgba(255, 255, 255, 0.9)" : "rgba(0,0,0,0.6)";
+    }).catch(err => {
+      console.warn("Torch failed", err);
+      alert("Flashlight is not supported by your browser or camera.");
+      isTorchOn = false;
+      if (btn) btn.style.background = "rgba(0,0,0,0.6)";
+    });
+  } catch(e) {
+    console.warn("Torch API error", e);
+  }
+}
+
 async function initScanner() {
   if (window.scannerInstance) {
     try {
