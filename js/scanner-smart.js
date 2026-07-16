@@ -204,7 +204,12 @@ function finalizeStart() {
 let scanTimeoutTimer = null;
 
 window.triggerManualScan = function() {
-  if (isScanning) return;
+  if (isScanning) {
+    // Cancel the scan if they tap it again while scanning
+    stopManualScan();
+    updateStatus("Scan cancelled.");
+    return;
+  }
   
   // Haptic feedback for hardware-like feel
   if (navigator.vibrate) navigator.vibrate(50);
@@ -212,6 +217,7 @@ window.triggerManualScan = function() {
   isScanning = true;
   candidateCode = null;
   candidateCount = 0;
+  lastValue = ""; // IMPORTANT: Clear last value so they can deliberately rescan the same package!
   
   const btn = document.getElementById("manualScanBtn");
   if (btn) {
@@ -227,14 +233,14 @@ window.triggerManualScan = function() {
 
   updateStatus("Scanning... Point at barcode");
   
-  // Timeout after 3 seconds if nothing is found
+  // Timeout after 8 seconds if nothing is found (gives them more time to focus)
   clearTimeout(scanTimeoutTimer);
   scanTimeoutTimer = setTimeout(() => {
     if (isScanning) {
       stopManualScan();
       updateStatus("Scan timeout. Tap again.");
     }
-  }, 3000);
+  }, 8000);
 }
 
 function stopManualScan() {
@@ -340,18 +346,18 @@ function onDecoded(decodedText, decodedResult) {
 
   // Redundancy Check for 1D Barcodes:
   // 1D barcodes are prone to partial reads if the camera is moving.
-  // We require the scanner to see the EXACT same code 3 frames in a row before accepting it.
+  // We require the scanner to see the EXACT same code 2 frames in a row before accepting it.
   if (!isQR) {
     if (candidateCode !== decodedText) {
       candidateCode = decodedText;
       candidateCount = 1;
       clearTimeout(candidateTimer);
-      // Reset if we don't see it again within 500ms
-      candidateTimer = setTimeout(() => { candidateCode = null; candidateCount = 0; }, 500);
+      // Reset if we don't see it again within 1500ms (gives slow phones enough time)
+      candidateTimer = setTimeout(() => { candidateCode = null; candidateCount = 0; }, 1500);
       return;
     } else {
       candidateCount++;
-      if (candidateCount < 3) return; // Wait until we see it 3 times!
+      if (candidateCount < 2) return; // Wait until we see it 2 times!
     }
   }
 
