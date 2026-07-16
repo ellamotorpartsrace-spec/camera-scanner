@@ -371,7 +371,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
       </div>
 
       <!-- Camera Area -->
-      <div id="reader-wrapper" style="position: relative; overflow: hidden; border-radius: 14px;">
+      <div id="reader-wrapper" style="position: relative; overflow: hidden; border-radius: 14px; margin-bottom: 15px;">
         <div id="reader"></div>
         
         <!-- Flashlight Button -->
@@ -385,9 +385,14 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
           <div class="bracket tr"></div>
           <div class="bracket bl"></div>
           <div class="bracket br"></div>
-          <div class="laser-line"></div>
+          <div class="laser-line" style="display:none;"></div>
         </div>
       </div>
+
+      <!-- Manual Scan Button -->
+      <button id="manualScanBtn" onclick="triggerManualScan()" style="width: 100%; background: #22c55e; color: white; border: none; padding: 18px; border-radius: 12px; font-size: 1.2rem; font-weight: 900; letter-spacing: 1px; cursor: pointer; box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4); margin-bottom: 15px; text-transform: uppercase; transition: 0.2s;">
+        📸 TAP TO SCAN
+      </button>
 
       <!-- Status -->
       <div id="status-pill">Starting camera…</div>
@@ -456,7 +461,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
   </script>
 
   <script src="js/sound.js"></script>
-  <script src="js/scanner-smart.js?v=8"></script>
+  <script src="js/scanner-smart.js?v=10"></script>
 </body>
 
 </html>

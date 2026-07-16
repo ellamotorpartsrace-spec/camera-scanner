@@ -195,11 +195,56 @@ async function initScanner() {
 }
 
 function finalizeStart() {
-  isScanning = true;
-  updateStatus("Ready – point at a QR or barcode");
+  isScanning = false; // Start in idle mode, waiting for button press
+  updateStatus("Camera ready. Tap SCAN to begin.");
   applyAdvancedCamera();
-  // Permanently show the static guide since the visual tracker is removed for performance
   showFallbackGuide();
+}
+
+let scanTimeoutTimer = null;
+
+window.triggerManualScan = function() {
+  if (isScanning) return;
+  
+  isScanning = true;
+  candidateCode = null;
+  candidateCount = 0;
+  
+  const btn = document.getElementById("manualScanBtn");
+  if (btn) {
+    btn.innerHTML = "⏳ SCANNING...";
+    btn.style.background = "#eab308"; // Yellow
+    btn.style.boxShadow = "0 4px 15px rgba(234, 179, 8, 0.4)";
+  }
+  
+  // Make laser line visible
+  const laser = document.querySelector(".laser-line");
+  if (laser) laser.style.display = "block";
+
+  updateStatus("Scanning... Point at barcode");
+  
+  // Timeout after 3 seconds if nothing is found
+  clearTimeout(scanTimeoutTimer);
+  scanTimeoutTimer = setTimeout(() => {
+    if (isScanning) {
+      stopManualScan();
+      updateStatus("Scan timeout. Tap button again.");
+    }
+  }, 3000);
+}
+
+function stopManualScan() {
+  isScanning = false;
+  const btn = document.getElementById("manualScanBtn");
+  if (btn) {
+    btn.innerHTML = "📸 TAP TO SCAN";
+    btn.style.background = "#22c55e"; // Green
+    btn.style.boxShadow = "0 4px 15px rgba(34, 197, 94, 0.4)";
+  }
+  
+  // Hide laser
+  const laser = document.querySelector(".laser-line");
+  if (laser) laser.style.display = "none";
 }
 
 function handleCameraError(err) {
@@ -275,6 +320,10 @@ function applyAdvancedCamera() {
   }
 }
 
+let candidateCode = null;
+let candidateCount = 0;
+let candidateTimer = null;
+
 function onDecoded(decodedText, decodedResult) {
   if (!isScanning) return;
   if (decodedText === lastValue) return;
@@ -291,6 +340,31 @@ function onDecoded(decodedText, decodedResult) {
 
   const fmt = decodedResult?.result?.format?.formatName || "";
   const isQR = QR_FORMAT_NAMES.has(fmt);
+
+  // Redundancy Check for 1D Barcodes:
+  // 1D barcodes are prone to partial reads if the camera is moving.
+  // We require the scanner to see the EXACT same code 3 frames in a row before accepting it.
+  if (!isQR) {
+    if (candidateCode !== decodedText) {
+      candidateCode = decodedText;
+      candidateCount = 1;
+      clearTimeout(candidateTimer);
+      // Reset if we don't see it again within 500ms
+      candidateTimer = setTimeout(() => { candidateCode = null; candidateCount = 0; }, 500);
+      return;
+    } else {
+      candidateCount++;
+      if (candidateCount < 3) return; // Wait until we see it 3 times!
+    }
+  }
+
+  // Clear candidate buffer on success
+  candidateCode = null;
+  candidateCount = 0;
+  clearTimeout(candidateTimer);
+  
+  clearTimeout(scanTimeoutTimer);
+  stopManualScan();
 
   // Update badge
   updateBadge(isQR ? "qr" : "barcode");
