@@ -491,11 +491,8 @@ async function handleScan(value, type) {
 }
 
 function resumeScanner() {
-  isScanning = true;
-  // Delay clearing lastValue to prevent infinite duplicate scan loops 
-  // if the camera is held over the same barcode.
-  setTimeout(() => { lastValue = null; }, 5000);
-  updateStatus("Ready – point at a QR or barcode");
+  isScanning = false; // Keep it false to enforce Tap-To-Scan!
+  updateStatus("Camera ready. Tap SCAN to begin.");
 }
 
 /* ══════════════════════════════════════════
