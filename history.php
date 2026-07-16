@@ -314,7 +314,9 @@ $config = require __DIR__ . '/api/core/config.php';
                     ${r.platform ? `<span class="badge" style="background:${r.platform === 'Lazada' ? 'rgba(0,147,255,0.15)' : r.platform === 'TikTok' ? 'rgba(0,0,0,0.15)' : 'rgba(238,77,45,0.15)'};color:${r.platform === 'Lazada' ? '#0093ff' : r.platform === 'TikTok' ? '#9ca3af' : '#ee4d2d'}">${r.platform}</span>` : '<span style="color:#64748b">-</span>'}
                 </td>
                 <td>${r.gs1_gtin || "-"}</td>
-                <td>${r.gs1_batch || "-"}</td>
+                <td>
+                    ${r.gs1_batch ? `<span class="badge" style="background:rgba(203, 213, 225, 0.2); color:#475569; font-family:monospace; font-size:0.75rem;">${r.gs1_batch}</span>` : "-"}
+                </td>
                 <td>${formatTime(r.created_at)}</td>
                 <td>${formatTime(r.scanned_at)}</td>
                 <td>${formatTime(r.returned_at)}</td>

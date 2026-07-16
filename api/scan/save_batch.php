@@ -39,7 +39,8 @@ try {
             scanned_at,
             returned_at,
             update_count,
-            created_at
+            created_at,
+            gs1_batch
         )
         VALUES (
             :code,
@@ -52,7 +53,8 @@ try {
             NOW(),
             IF(:is_return_ins, NOW(), NULL),
             0,
-            NOW()
+            NOW(),
+            :gs1_batch
         )
         ON DUPLICATE KEY UPDATE
             scanned_at   = NOW(),
@@ -61,7 +63,8 @@ try {
             ip_address   = :ip_upd,
             courier      = IF(:courier_upd != '', :courier_upd2, courier),
             parcel_size  = IF(:parcel_size_upd != '', :parcel_size_upd2, parcel_size),
-            platform     = IF(:platform_upd != '', :platform_upd2, platform)
+            platform     = IF(:platform_upd != '', :platform_upd2, platform),
+            gs1_batch    = IF(gs1_batch IS NULL OR gs1_batch = '', :gs1_batch_upd, gs1_batch)
     ";
     
     $stmt = $pdo->prepare($sql);
@@ -111,6 +114,8 @@ try {
 
         $allowedPlatforms = ['Lazada', 'TikTok', 'Shopee', ''];
         if (!in_array($platform, $allowedPlatforms, true)) $platform = '';
+        
+        $gs1Batch = trim($scan['gs1_batch'] ?? '');
 
         $stmt->execute([
             ":code" => $codeValue,
@@ -128,7 +133,9 @@ try {
             ":parcel_size_upd" => $parcelSize,
             ":parcel_size_upd2" => $parcelSize,
             ":platform_upd" => $platform,
-            ":platform_upd2" => $platform
+            ":platform_upd2" => $platform,
+            ":gs1_batch" => $gs1Batch,
+            ":gs1_batch_upd" => $gs1Batch
         ]);
 
         $isDuplicate = ($stmt->rowCount() === 2);
