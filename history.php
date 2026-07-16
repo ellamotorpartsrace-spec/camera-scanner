@@ -61,6 +61,7 @@ $config = require __DIR__ . '/api/core/config.php';
         <button onclick="preset('yesterday')">Yesterday</button>
         <button onclick="preset('week')">This Week</button>
         <div style="flex:1"></div>
+        <button id="batchDeleteBtn" class="pg-btn" style="display:none; background: #ef4444; color: white; border-color: #ef4444;" onclick="deleteSelected()">🗑️ Delete Selected</button>
         <a href="#" class="pg-btn" onclick="exportCSV()">Export CSV</a>
     </div>
 
@@ -68,6 +69,7 @@ $config = require __DIR__ . '/api/core/config.php';
         <table>
             <thead>
                 <tr>
+                    <th style="width:40px;"><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)"></th>
                     <th>Code</th>
                     <th>Type</th>
                     <th>Courier</th>
@@ -234,22 +236,48 @@ $config = require __DIR__ . '/api/core/config.php';
             if (!rows.length) {
                 tbody.innerHTML = `
             <tr>
-                <td colspan="12" style="text-align:center;padding:40px;">
+                <td colspan="13" style="text-align:center;padding:40px;">
                     No records found
                 </td>
             </tr>
         `;
+                document.getElementById('selectAll').checked = false;
+                updateDeleteBtn();
                 return;
             }
 
             tbody.innerHTML = rows.map(r => {
                 const dup = r.update_count > 0;
+                
+                // Status Badge Logic
+                let statusBadge = "";
+                if (r.returned_at) {
+                    statusBadge = `<span class="badge" style="background:rgba(239, 68, 68, 0.15);color:#ef4444">RETURNED</span>`;
+                } else if (dup) {
+                    statusBadge = `<span class="badge" style="background:rgba(245, 158, 11, 0.15);color:#f59e0b">RESCAN</span>`;
+                } else {
+                    statusBadge = `<span class="badge" style="background:rgba(34, 197, 94, 0.15);color:#22c55e">UNIQUE</span>`;
+                }
+
+                // Type Badge Logic
+                let typeBadge = "";
+                if (r.code_type === 'QR') {
+                    typeBadge = `<span class="badge" style="background:rgba(34, 197, 94, 0.15);color:#22c55e">QR</span>`;
+                } else {
+                    typeBadge = `<span class="badge" style="background:rgba(59, 130, 246, 0.15);color:#3b82f6">BARCODE</span>`;
+                }
+
                 return `
             <tr>
-                <td style="font-family:monospace;color:#38bdf8">
-                    ${highlight(r.code_value, state.search)}
+                <td style="text-align:center;">
+                    <input type="checkbox" class="row-checkbox" value="${r.code_value}" onclick="updateDeleteBtn()">
                 </td>
-                <td>${r.code_type}</td>
+                <td style="font-family:monospace;color:#38bdf8">
+                    <a href="https://parcelsapp.com/en/tracking/${r.code_value}" target="_blank" style="color:#38bdf8; text-decoration:none;" title="Track Package">
+                        ${highlight(r.code_value, state.search)}
+                    </a>
+                </td>
+                <td>${typeBadge}</td>
                 <td><span class="courier-badge">${r.courier || "-"}</span></td>
                 <td>
                     <span class="badge" style="background:${r.parcel_size === 'BULKY' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(59, 130, 246, 0.15)'};color:${r.parcel_size === 'BULKY' ? '#a78bfa' : '#3b82f6'}">
@@ -267,14 +295,14 @@ $config = require __DIR__ . '/api/core/config.php';
                 <td style="text-align:center">
                     ${r.update_count + 1}
                 </td>
-                <td>
-                    <span class="badge ${r.returned_at ? "badge-dup" : (dup ? "badge-dup" : "badge-new")}" style="${r.returned_at ? "background:rgba(245, 158, 11, 0.15);color:#f59e0b" : ""}">
-                        ${r.returned_at ? "RETURNED" : (dup ? "RESCAN" : "UNIQUE")}
-                    </span>
-                </td>
+                <td>${statusBadge}</td>
             </tr>
         `;
             }).join("");
+            
+            // Reset Select All state after re-render
+            document.getElementById('selectAll').checked = false;
+            updateDeleteBtn();
         }
 
         /* =========================
@@ -402,6 +430,73 @@ $config = require __DIR__ . '/api/core/config.php';
             }
 
             window.location.href = url;
+        }
+
+        /* =========================
+           BATCH DELETE LOGIC
+        ========================= */
+        function toggleSelectAll(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = masterCheckbox.checked;
+            });
+            updateDeleteBtn();
+        }
+
+        function updateDeleteBtn() {
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            const btn = document.getElementById('batchDeleteBtn');
+            const masterCheckbox = document.getElementById('selectAll');
+            const allCheckboxes = document.querySelectorAll('.row-checkbox');
+
+            if (checkedBoxes.length > 0) {
+                btn.style.display = 'inline-block';
+                btn.innerHTML = `🗑️ Delete Selected (${checkedBoxes.length})`;
+            } else {
+                btn.style.display = 'none';
+            }
+
+            // Sync master checkbox state
+            if (allCheckboxes.length > 0) {
+                masterCheckbox.checked = checkedBoxes.length === allCheckboxes.length;
+            }
+        }
+
+        async function deleteSelected() {
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            if (checkedBoxes.length === 0) return;
+
+            const codes = Array.from(checkedBoxes).map(cb => cb.value);
+
+            if (!confirm(`Are you sure you want to permanently delete ${codes.length} scan(s)? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch("api/scan/delete.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ codes: codes })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`HTTP Error: ${res.status}`);
+                }
+
+                const data = await res.json();
+                if (data.status === "success") {
+                    // Uncheck master checkbox just in case
+                    document.getElementById('selectAll').checked = false;
+                    loadData(); // Refresh table
+                } else {
+                    alert("Error: " + data.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Failed to delete records.");
+            }
         }
     </script>
 
