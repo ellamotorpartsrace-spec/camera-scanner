@@ -448,6 +448,13 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
         </button>
       </div>
 
+      <!-- Submitted Batches Tally -->
+      <div id="submitted-batches-container" style="display: none; margin-top: 15px;">
+        <h4 style="font-size: 0.9rem; color: var(--muted); margin-bottom: 8px;">📦 Today's Submitted Batches</h4>
+        <ul id="submitted-batches-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+        </ul>
+      </div>
+
       <!-- Footer -->
       <div class="btn-group" style="margin-top:1.5rem;">
         <button onclick="location.href='index.php'" class="secondary">⬅ Back</button>
@@ -475,7 +482,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
   </script>
 
   <script src="js/sound.js"></script>
-  <script src="js/scanner-smart.js?v=18"></script>
+  <script src="js/scanner-smart.js?v=19"></script>
 </body>
 
 </html>
