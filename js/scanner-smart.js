@@ -307,13 +307,6 @@ function applyAdvancedCamera() {
       constraints.focusMode = "continuous";
     }
 
-    // Slight zoom (2.0x) makes barcode lines thicker in the frame,
-    // dramatically improving 1D barcode accuracy just like native apps do.
-    if (caps.zoom) {
-      const targetZoom = Math.min(caps.zoom.max, Math.max(caps.zoom.min, 2.0));
-      constraints.zoom = targetZoom;
-    }
-
     if (Object.keys(constraints).length > 0) {
       track.applyConstraints({ advanced: [constraints] }).catch(() => {
         // Silently ignore — these are optional enhancements
