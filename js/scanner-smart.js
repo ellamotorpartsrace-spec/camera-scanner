@@ -202,8 +202,12 @@ function finalizeStart() {
 }
 
 let scanTimeoutTimer = null;
+let resumeTimeoutTimer = null;
 
 window.triggerManualScan = function() {
+  // Clear any pending UI resets from previous scans
+  clearTimeout(resumeTimeoutTimer);
+
   if (isScanning) {
     // Cancel the scan if they tap it again while scanning
     stopManualScan();
@@ -487,12 +491,13 @@ async function handleScan(value, type) {
     updateStatus("❌ Save failed");
   }
 
-  setTimeout(resumeScanner, RESUME_DELAY);
+  resumeTimeoutTimer = setTimeout(resumeScanner, RESUME_DELAY);
 }
 
 function resumeScanner() {
-  isScanning = false; // Keep it false to enforce Tap-To-Scan!
-  updateStatus("Camera ready. Tap SCAN to begin.");
+  if (!isScanning) {
+    updateStatus("Camera ready. Tap SCAN to begin.");
+  }
 }
 
 /* ══════════════════════════════════════════
