@@ -691,20 +691,11 @@ async function submitBatch() {
   const submitBtn = document.getElementById("submitBatchBtn");
   if (submitBtn) submitBtn.innerText = "🚀 Uploading...";
 
-  // Generate a unique Batch ID (e.g., BATCH-1689230193)
-  const batchId = "BATCH-" + Date.now().toString().slice(-6) + Math.floor(Math.random() * 1000);
-  
-  // Attach the batch ID to the gs1_batch field of every scan
-  const scansToUpload = batchQueue.map(scan => ({
-    ...scan,
-    gs1_batch: batchId
-  }));
-
   try {
     const res = await fetch("api/scan/save_batch.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scans: scansToUpload })
+      body: JSON.stringify({ scans: batchQueue })
     });
     
     let data;

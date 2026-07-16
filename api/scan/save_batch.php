@@ -25,6 +25,17 @@ $results = [
 ];
 
 try {
+    // Generate chronological Batch ID for today (e.g. BATCH-1, BATCH-2)
+    $batchSql = "SELECT gs1_batch FROM scans WHERE DATE(created_at) = CURDATE() AND gs1_batch LIKE 'BATCH-%' ORDER BY CAST(SUBSTRING_INDEX(gs1_batch, '-', -1) AS UNSIGNED) DESC LIMIT 1";
+    $batchStmt = $pdo->query($batchSql);
+    $lastBatch = $batchStmt->fetchColumn();
+
+    $nextBatchNum = 1;
+    if ($lastBatch && preg_match('/BATCH-(\d+)$/', $lastBatch, $matches)) {
+        $nextBatchNum = (int)$matches[1] + 1;
+    }
+    $assignedBatchId = "BATCH-" . $nextBatchNum;
+
     $pdo->beginTransaction();
 
     $sql = "
@@ -114,9 +125,6 @@ try {
 
         $allowedPlatforms = ['Lazada', 'TikTok', 'Shopee', ''];
         if (!in_array($platform, $allowedPlatforms, true)) $platform = '';
-        
-        $gs1Batch = trim($scan['gs1_batch'] ?? '');
-
         $stmt->execute([
             ":code" => $codeValue,
             ":type" => $codeType,
@@ -134,8 +142,8 @@ try {
             ":parcel_size_upd2" => $parcelSize,
             ":platform_upd" => $platform,
             ":platform_upd2" => $platform,
-            ":gs1_batch" => $gs1Batch,
-            ":gs1_batch_upd" => $gs1Batch
+            ":gs1_batch" => $assignedBatchId,
+            ":gs1_batch_upd" => $assignedBatchId
         ]);
 
         $isDuplicate = ($stmt->rowCount() === 2);
