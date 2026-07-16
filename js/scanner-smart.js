@@ -206,6 +206,9 @@ let scanTimeoutTimer = null;
 window.triggerManualScan = function() {
   if (isScanning) return;
   
+  // Haptic feedback for hardware-like feel
+  if (navigator.vibrate) navigator.vibrate(50);
+  
   isScanning = true;
   candidateCode = null;
   candidateCount = 0;
@@ -215,6 +218,7 @@ window.triggerManualScan = function() {
     btn.innerHTML = "⏳ SCANNING...";
     btn.style.background = "#eab308"; // Yellow
     btn.style.boxShadow = "0 4px 15px rgba(234, 179, 8, 0.4)";
+    btn.classList.remove("btn-pulse-idle"); // Stop animation while scanning
   }
   
   // Make laser line visible
@@ -228,7 +232,7 @@ window.triggerManualScan = function() {
   scanTimeoutTimer = setTimeout(() => {
     if (isScanning) {
       stopManualScan();
-      updateStatus("Scan timeout. Tap button again.");
+      updateStatus("Scan timeout. Tap again.");
     }
   }, 3000);
 }
@@ -365,6 +369,9 @@ function onDecoded(decodedText, decodedResult) {
   
   clearTimeout(scanTimeoutTimer);
   stopManualScan();
+
+  // Strong haptic feedback on success
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
   // Update badge
   updateBadge(isQR ? "qr" : "barcode");
