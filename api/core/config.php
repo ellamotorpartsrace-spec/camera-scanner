@@ -9,7 +9,7 @@ return [
         // Check if we are running on localhost (XAMPP) or Hostinger
         'name' => (in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1'])) ? 'ella_scanner' : 'u296077208_camera_scanner',
         'user' => (in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1'])) ? 'root' : 'u296077208_scanner',
-        'pass' => (in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1'])) ? '' : 'ella2002Scanner',
+        'pass' => (in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1'])) ? 'elladbPogisiBen' : 'ella2002Scanner',
         'charset' => 'utf8mb4'
     ],
     'security' => [
