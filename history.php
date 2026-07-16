@@ -255,6 +255,7 @@ $config = require __DIR__ . '/api/core/config.php';
            RENDER TABLE
         ========================= */
         function formatTime(ts) {
+            if (!ts || ts === "0000-00-00 00:00:00") return "-";
             const d = new Date(ts);
             return isNaN(d) ? "-" : d.toLocaleString();
         }
