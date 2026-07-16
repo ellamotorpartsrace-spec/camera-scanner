@@ -14,6 +14,7 @@ $size     = $_GET['size']     ?? null;
 $search   = $_GET['search']   ?? null;
 $platform = $_GET['platform'] ?? null;
 $type     = $_GET['type']     ?? null;
+$batch    = $_GET['batch']    ?? null;
 
 $offset = ($page - 1) * $limit;
 
@@ -48,6 +49,11 @@ if ($search) {
 if ($platform) {
     $where[] = "platform = :platform";
     $params[':platform'] = $platform;
+}
+
+if ($batch) {
+    $where[] = "gs1_batch = :batch";
+    $params[':batch'] = "BATCH-" . $batch;
 }
 
 if ($type === 'returned') {

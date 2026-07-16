@@ -54,6 +54,9 @@ $config = require __DIR__ . '/api/core/config.php';
                 </option>
             <?php endforeach; ?>
         </select>
+        <select id="batchFilter">
+            <option value="">All Batches</option>
+        </select>
         <select id="typeFilter">
             <option value="">All Scans</option>
             <option value="scanned">First Scan</option>
@@ -118,6 +121,7 @@ $config = require __DIR__ . '/api/core/config.php';
             courier: "",
             size: "",
             platform: "",
+            batch: "",
             type: "",
             search: "",
             autoRefresh: true
@@ -133,6 +137,7 @@ $config = require __DIR__ . '/api/core/config.php';
         const courierEl = document.getElementById("courierFilter");
         const sizeEl = document.getElementById("sizeFilter");
         const platformEl = document.getElementById("platformFilter");
+        const batchEl = document.getElementById("batchFilter");
         const typeEl = document.getElementById("typeFilter");
         const searchEl = document.getElementById("codeSearch");
 
@@ -141,6 +146,7 @@ $config = require __DIR__ . '/api/core/config.php';
         courierEl.value = state.courier;
         sizeEl.value = state.size;
         platformEl.value = state.platform;
+        batchEl.value = state.batch;
         typeEl.value = state.type;
         searchEl.value = state.search;
 
@@ -162,6 +168,27 @@ $config = require __DIR__ . '/api/core/config.php';
         /* =========================
            LOAD DATA
         ========================= */
+        async function fetchBatchesDropdown() {
+            try {
+                const batchEl = document.getElementById("batchFilter");
+                const currentBatch = state.batch;
+                
+                const res = await fetch(`api/scan/batch_summary.php?from=${state.from}&to=${state.to}`);
+                const data = await res.json();
+                
+                let html = '<option value="">All Batches</option>';
+                if (data.status === "success" && data.data) {
+                    data.data.forEach(b => {
+                        html += `<option value="${b.id}">Batch ${b.id} (${b.count})</option>`;
+                    });
+                }
+                batchEl.innerHTML = html;
+                batchEl.value = currentBatch; // Restore selection if valid
+            } catch (err) {
+                console.error("Failed to fetch batches dropdown", err);
+            }
+        }
+
         async function loadData() {
             try {
                 let url = `${API_URL}?page=${state.page}&limit=${LIMIT}&from=${state.from}&to=${state.to}`;
@@ -176,6 +203,9 @@ $config = require __DIR__ . '/api/core/config.php';
                 }
                 if (state.type) {
                     url += `&type=${encodeURIComponent(state.type)}`;
+                }
+                if (state.batch) {
+                    url += `&batch=${encodeURIComponent(state.batch)}`;
                 }
                 if (state.search) {
                     url += `&search=${encodeURIComponent(state.search)}`;
@@ -318,7 +348,7 @@ $config = require __DIR__ . '/api/core/config.php';
                 </td>
                 <td>${r.gs1_gtin || "-"}</td>
                 <td>
-                    ${r.gs1_batch ? `<span class="badge" style="background:rgba(203, 213, 225, 0.2); color:#475569; font-family:monospace; font-size:0.75rem;">${r.gs1_batch}</span>` : "-"}
+                    ${r.gs1_batch ? `<span class="badge" style="background:rgba(192, 132, 252, 0.15); color:#d8b4fe; font-family:monospace; font-size:0.85rem; border: 1px solid rgba(192, 132, 252, 0.3); box-shadow: 0 0 5px rgba(192, 132, 252, 0.2);">${r.gs1_batch}</span>` : "-"}
                 </td>
                 <td>${formatTime(r.created_at)}</td>
                 <td>${formatTime(r.scanned_at)}</td>
@@ -372,6 +402,7 @@ $config = require __DIR__ . '/api/core/config.php';
             const courier = courierEl.value;
             const size = sizeEl.value;
             const platform = platformEl.value;
+            const batch = document.getElementById("batchFilter").value;
             const type = typeEl.value;
             const search = searchEl.value.trim();
 
@@ -380,11 +411,19 @@ $config = require __DIR__ . '/api/core/config.php';
                 return;
             }
 
+            // Only fetch batches if date changed
+            if (state.from !== from || state.to !== to) {
+                state.from = from;
+                state.to = to;
+                fetchBatchesDropdown();
+            }
+
             state.from = from;
             state.to = to;
             state.courier = courier;
             state.size = size;
             state.platform = platform;
+            state.batch = batch;
             state.type = type;
             state.search = search;
             state.page = 1;
@@ -419,12 +458,15 @@ $config = require __DIR__ . '/api/core/config.php';
             sizeEl.value = state.size;
             platformEl.value = state.platform;
             state.page = 1;
+            
+            fetchBatchesDropdown();
             loadData();
         }
 
         /* =========================
            START
         ========================= */
+        fetchBatchesDropdown();
         loadData();
 
         setInterval(() => {

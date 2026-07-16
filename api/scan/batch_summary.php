@@ -9,16 +9,28 @@ require_once __DIR__ . '/../core/db.php';
 try {
     // We fetch all unique batches submitted today, along with the count of items in each batch.
     // They are ordered descending, so the newest batch is on top.
+    $from = $_GET['from'] ?? null;
+    $to = $_GET['to'] ?? null;
+
+    $whereStr = "DATE(created_at) = CURDATE()";
+    $params = [];
+    if ($from && $to) {
+        $whereStr = "DATE(created_at) >= :from AND DATE(created_at) <= :to";
+        $params[':from'] = $from;
+        $params[':to'] = $to;
+    }
+
     $sql = "
         SELECT gs1_batch as id, COUNT(*) as count 
         FROM scans 
-        WHERE DATE(created_at) = CURDATE() 
+        WHERE $whereStr 
           AND gs1_batch LIKE 'BATCH-%'
         GROUP BY gs1_batch 
         ORDER BY CAST(SUBSTRING_INDEX(gs1_batch, '-', -1) AS UNSIGNED) DESC
     ";
     
-    $stmt = $pdo->query($sql);
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Clean up output to match JS expected format (id: number, count: number)
