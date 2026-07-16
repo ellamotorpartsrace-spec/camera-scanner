@@ -5,24 +5,11 @@
 
 return [
     'db' => [
-        // ==========================================
-        // LOCAL XAMPP SETTINGS (Currently disabled)
-        // ==========================================
-        /*
         'host' => 'localhost',
-        'name' => 'ella_scanner',
-        'user' => 'root',
-        'pass' => '', 
-        'charset' => 'utf8mb4',
-        */
-
-        // ==========================================
-        // PRODUCTION SETTINGS (Hostinger) - ACTIVE
-        // ==========================================
-        'host' => 'localhost', // Usually 'localhost' on Hostinger
-        'name' => 'u296077208_camera_scanner', // INPUT YOUR DB NAME HERE
-        'user' => 'u296077208_scanner', // INPUT YOUR DB USER HERE
-        'pass' => 'ella2002Scanner',         // INPUT YOUR DB PASSWORD HERE
+        // Check if we are running on localhost (XAMPP) or Hostinger
+        'name' => (in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1'])) ? 'ella_scanner' : 'u296077208_camera_scanner',
+        'user' => (in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1'])) ? 'root' : 'u296077208_scanner',
+        'pass' => (in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1'])) ? '' : 'ella2002Scanner',
         'charset' => 'utf8mb4'
     ],
     'security' => [
