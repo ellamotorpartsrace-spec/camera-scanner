@@ -231,6 +231,30 @@ $config = require __DIR__ . '/api/core/config.php';
             const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
             return text.replace(regex, '<mark class="p-0 bg-warning">$1</mark>');
         }
+        
+        function getTrackingLink(courier, platform, code) {
+            const c = courier || "";
+            const p = platform || "";
+            
+            if (c.includes("Shopee") || p === "Shopee") {
+                // By omitting 'code=' the SPX site will just insert the tracking number directly into the search bar
+                return `https://spx.ph/track?${code}`;
+            }
+            if (c.includes("JNT") || c.includes("J&T")) {
+                return `https://www.jtexpress.ph/index/query/gzquery.html?bills=${code}`;
+            }
+            if (c.includes("Lazada") || p === "Lazada") {
+                return `https://tracker.lel.asia/tracker?trackingNumber=${code}`;
+            }
+            if (c.includes("Flash")) {
+                return `https://www.flashexpress.ph/tools/tracking/?se=${code}`;
+            }
+            if (c.includes("LBC")) {
+                return `https://www.lbcexpress.com/track/`; // LBC usually requires manual input
+            }
+            // Fallback for others
+            return `https://www.google.com/search?q=track+package+${code}`;
+        }
 
         function renderTable(rows) {
             if (!rows.length) {
@@ -267,13 +291,15 @@ $config = require __DIR__ . '/api/core/config.php';
                     typeBadge = `<span class="badge" style="background:rgba(59, 130, 246, 0.15);color:#3b82f6">BARCODE</span>`;
                 }
 
+                const trackUrl = getTrackingLink(r.courier, r.platform, r.code_value);
+
                 return `
             <tr>
                 <td style="text-align:center;">
                     <input type="checkbox" class="row-checkbox" value="${r.code_value}" onclick="updateDeleteBtn()">
                 </td>
                 <td style="font-family:monospace;color:#38bdf8">
-                    <a href="https://parcelsapp.com/en/tracking/${r.code_value}" target="_blank" style="color:#38bdf8; text-decoration:none;" title="Track Package">
+                    <a href="${trackUrl}" target="_blank" style="color:#38bdf8; text-decoration:none;" title="Track Package">
                         ${highlight(r.code_value, state.search)}
                     </a>
                 </td>
