@@ -11,9 +11,8 @@ $is_authenticated = true;
 // Fetch Today's Stats
 $stats = ['total' => 0, 'returned' => 0, 'platforms' => []];
 try {
-  $today = date('Y-m-d');
-  $stmt = $pdo->prepare("SELECT COUNT(*) as total, SUM(IF(returned_at IS NOT NULL AND returned_at > '2000-01-01', 1, 0)) as returned FROM scans WHERE DATE(scanned_at) = :today");
-  $stmt->execute([':today' => $today]);
+  // Use MySQL CURDATE() so it perfectly matches the +08:00 timezone set in db.php
+  $stmt = $pdo->query("SELECT COUNT(*) as total, SUM(IF(returned_at IS NOT NULL AND returned_at > '2000-01-01', 1, 0)) as returned FROM scans WHERE DATE(scanned_at) = CURDATE()");
   $row = $stmt->fetch();
   $stats['total'] = (int) ($row['total'] ?? 0);
   $stats['returned'] = (int) ($row['returned'] ?? 0);
