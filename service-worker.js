@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ella-scanner-v3'; // Bumped version to force cache clear
+const CACHE_NAME = 'ella-scanner-v4'; // Bumped version to force cache clear
 const ASSETS = [
   'css/bootstrap-5.3.8-dist/css/bootstrap.min.css',
   'icon-512.png',
@@ -31,7 +31,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Network-First Strategy for all requests to ensure dashboard stats are always live
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request.url, { 
+      method: event.request.method,
+      headers: event.request.headers,
+      cache: 'no-store' 
+    })
       .then((networkResponse) => {
         return caches.open(CACHE_NAME).then((cache) => {
           // Don't cache API POST requests

@@ -585,6 +585,13 @@ try {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js').catch(() => { });
     }
+
+    // Bust bfcache (Back/Forward Cache) on mobile browsers
+    window.addEventListener("pageshow", function (event) {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    });
   </script>
 
 </body>
