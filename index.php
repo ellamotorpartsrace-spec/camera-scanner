@@ -490,9 +490,9 @@ try {
       <div class="stats-row">
         <div class="stat-dot"></div>
         <div class="stats-text">
-          Today: <span><?php echo $stats['total']; ?> Scans</span>
+          Today: <span id="dashTotalScans"><?php echo $stats['total']; ?> Scans</span>
           &nbsp;·&nbsp;
-          Returns: <span><?php echo $stats['returned']; ?></span>
+          Returns: <span id="dashTotalReturns"><?php echo $stats['returned']; ?></span>
         </div>
       </div>
     </div>
@@ -586,12 +586,36 @@ try {
       navigator.serviceWorker.register('service-worker.js').catch(() => { });
     }
 
-    // Bust bfcache (Back/Forward Cache) on mobile browsers
+    // Live Auto-Update for Dashboard Stats
+    async function fetchLiveStats() {
+      try {
+        const res = await fetch("api/scan/dashboard_stats.php");
+        const json = await res.json();
+        if (json.status === "success") {
+          document.getElementById("dashTotalScans").innerText = json.data.total + " Scans";
+          document.getElementById("dashTotalReturns").innerText = json.data.returned;
+        }
+      } catch (e) {
+        console.error("Failed to fetch live stats", e);
+      }
+    }
+
+    // Bust bfcache on mobile and fetch latest stats when returning to the tab
     window.addEventListener("pageshow", function (event) {
       if (event.persisted) {
-        window.location.reload();
+        fetchLiveStats();
       }
     });
+    
+    // Also update stats every time the tab becomes visible
+    document.addEventListener("visibilitychange", function() {
+      if (document.visibilityState === 'visible') {
+        fetchLiveStats();
+      }
+    });
+
+    // Auto poll every 10 seconds just in case they leave the phone on the dashboard
+    setInterval(fetchLiveStats, 10000);
   </script>
 
 </body>
