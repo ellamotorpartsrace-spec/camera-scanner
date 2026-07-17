@@ -105,8 +105,8 @@ $config = require __DIR__ . '/api/core/config.php';
 
     <!-- Summary Report Modal -->
     <div id="summaryModal" class="modal" tabindex="-1" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; overflow-y:auto;">
-        <div style="background:var(--bg); margin: 5% auto; padding: 24px; border-radius: 12px; width: 90%; max-width: 900px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+        <div class="modal-content-wrap">
+            <div class="modal-header-flex">
                 <h2 style="margin:0; font-weight:800;">📊 Summary Report <span id="summaryModalDate" style="font-size:1rem; color:var(--muted); font-weight:600; margin-left:12px;"></span></h2>
             </div>
             
@@ -129,8 +129,8 @@ $config = require __DIR__ . '/api/core/config.php';
                 </div>
             </div>
 
-            <div class="table-wrap">
-                <table>
+            <div class="table-wrap" style="border: none; max-height: unset; overflow: visible;">
+                <table class="summary-table">
                     <thead>
                         <tr>
                             <th>Batch</th>

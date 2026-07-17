@@ -713,14 +713,19 @@ async function fetchSubmittedBatches() {
     const res = await fetch("api/scan/batch_summary.php");
     const data = await res.json();
     if (data.status === "success" && data.data.length > 0) {
-      submittedBatches = data.data; // Update local array for reference if needed
-      list.innerHTML = submittedBatches.map(b => `
-        <li style="background: #ffffff; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-          <span style="font-weight: 600; color: #3b82f6;">Batch ${b.id}</span>
-          <span class="badge" style="background: #f1f5f9; color: #475569; padding: 6px 10px; font-size: 0.85rem;">${b.count} scans</span>
-        </li>
-      `).join("");
-      container.style.display = "block";
+      submittedBatches = data.data.filter(b => b.id !== 'NORMAL');
+      
+      if (submittedBatches.length > 0) {
+        list.innerHTML = submittedBatches.map(b => `
+          <li style="background: #ffffff; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <span style="font-weight: 600; color: #3b82f6;">Batch ${b.id}</span>
+            <span class="badge" style="background: #f1f5f9; color: #475569; padding: 6px 10px; font-size: 0.85rem;">${b.count} scans</span>
+          </li>
+        `).join("");
+        container.style.display = "block";
+      } else {
+        container.style.display = "none";
+      }
     } else {
       container.style.display = "none";
     }
