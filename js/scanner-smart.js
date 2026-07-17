@@ -46,6 +46,7 @@ let isBatchMode = false;
 let batchQueue = [];
 let offlineQueue = [];
 let submittedBatches = [];
+let recentScans = [];
 
 /* ── COUNTERS ── */
 let scanCount = 0;
@@ -97,6 +98,13 @@ window.addEventListener("load", () => {
   window.addEventListener("online", handleOnline);
   window.addEventListener("offline", handleOffline);
   handleOffline(); // Check initial state
+
+  // Poll for new batches submitted by other phones
+  setInterval(() => {
+    if (isScanning || document.visibilityState === 'visible') {
+      fetchSubmittedBatches();
+    }
+  }, 10000);
 });
 
 /* ══════════════════════════════════════════
@@ -555,19 +563,30 @@ function restoreCounterUI() { updateCounterUI(); }
 
 function loadSession() {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    if (!raw) return;
-    const d = JSON.parse(raw);
-    scanCount = d.scanCount || 0;
-    successScanCount = d.successScanCount || 0;
-    pouchCount = d.pouchCount || 0;
-    bulkyCount = d.bulkyCount || 0;
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      scanCount = d.scanCount || 0;
+      successScanCount = d.successScanCount || 0;
+      pouchCount = d.pouchCount || 0;
+      bulkyCount = d.bulkyCount || 0;
+    }
+
+    const rawRecent = localStorage.getItem("smartRecentScans");
+    if (rawRecent) {
+      recentScans = JSON.parse(rawRecent) || [];
+      // Render backwards so newest ends up on top via prepend
+      for (let i = recentScans.length - 1; i >= 0; i--) {
+        const item = recentScans[i];
+        renderHistoryDOM(item.value, item.type, item.duplicate, item.data);
+      }
+    }
   } catch (e) { console.error("Session load:", e); }
 }
 
 function saveSession() {
   try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
       scanCount, successScanCount, pouchCount, bulkyCount
     }));
   } catch (e) { console.error("Session save:", e); }
@@ -575,7 +594,9 @@ function saveSession() {
 
 function clearSession() {
   if (!confirm("Clear counters and recent scans?")) return;
-  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem("smartRecentScans");
+  recentScans = [];
   scanCount = successScanCount = pouchCount = bulkyCount = 0;
   updateCounterUI();
   const hl = document.getElementById("historyList");
@@ -590,6 +611,16 @@ function clearSession() {
    HISTORY
 ══════════════════════════════════════════ */
 function pushHistory(value, type, duplicate = false, data = {}) {
+  // Save to memory
+  recentScans.unshift({ value, type, duplicate, data });
+  if (recentScans.length > 50) recentScans.pop();
+  localStorage.setItem("smartRecentScans", JSON.stringify(recentScans));
+  
+  // Render to DOM
+  renderHistoryDOM(value, type, duplicate, data);
+}
+
+function renderHistoryDOM(value, type, duplicate = false, data = {}) {
   const list = document.getElementById("historyList");
   if (!list) return;
   const ph = list.querySelector(".placeholder");
@@ -641,7 +672,7 @@ function formatDateTime(ts) {
 ══════════════════════════════════════════ */
 function loadQueues() {
   try {
-    const b = sessionStorage.getItem("smartBatchQueue");
+    const b = localStorage.getItem("smartBatchQueue");
     if (b) batchQueue = JSON.parse(b) || [];
     const o = localStorage.getItem("smartOfflineQueue");
     if (o) offlineQueue = JSON.parse(o) || [];
@@ -651,7 +682,7 @@ function loadQueues() {
 }
 
 function saveQueues() {
-  sessionStorage.setItem("smartBatchQueue", JSON.stringify(batchQueue));
+  localStorage.setItem("smartBatchQueue", JSON.stringify(batchQueue));
   localStorage.setItem("smartOfflineQueue", JSON.stringify(offlineQueue));
   updateBatchUI();
 }
