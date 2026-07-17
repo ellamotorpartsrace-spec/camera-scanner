@@ -21,7 +21,11 @@ try {
     }
 
     $sql = "
-        SELECT gs1_batch as id, COUNT(*) as count 
+        SELECT 
+            gs1_batch as id, 
+            COUNT(*) as count,
+            SUM(IF(parcel_size = 'POUCH', 1, 0)) as pouch_count,
+            SUM(IF(parcel_size = 'BULKY', 1, 0)) as bulky_count
         FROM scans 
         WHERE $whereStr 
           AND gs1_batch LIKE 'BATCH-%'
@@ -39,7 +43,9 @@ try {
         $batchNum = (int)str_replace("BATCH-", "", $b['id']);
         $formatted[] = [
             "id" => $batchNum,
-            "count" => (int)$b['count']
+            "count" => (int)$b['count'],
+            "pouch_count" => (int)$b['pouch_count'],
+            "bulky_count" => (int)$b['bulky_count']
         ];
     }
     
