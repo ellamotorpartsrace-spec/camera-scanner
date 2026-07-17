@@ -104,48 +104,53 @@ $config = require __DIR__ . '/api/core/config.php';
     <div class="pagination" id="pagination"></div>
 
     <!-- Summary Report Modal -->
-    <div id="summaryModal" class="modal" tabindex="-1" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; overflow-y:auto;">
-        <div class="modal-content-wrap">
-            <div class="modal-header-flex">
-                <h2 style="margin:0; font-weight:800;">📊 Summary Report <span id="summaryModalDate" style="font-size:1rem; color:var(--muted); font-weight:600; margin-left:12px;"></span></h2>
+    <div id="summaryModal" class="modal" tabindex="-1" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; overflow-y:auto; backdrop-filter: blur(4px);">
+        <div class="modal-content-wrap" style="background: var(--bg, #f8fafc); position: relative; border-radius: 16px; margin: 5% auto; width: 95%; max-width: 900px; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+            
+            <!-- Sticky Close Button -->
+            <button onclick="closeSummaryReport()" style="position: absolute; top: 16px; right: 16px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                ✖
+            </button>
+
+            <div class="modal-header-flex" style="margin-bottom: 20px; padding-right: 40px;">
+                <h2 style="margin:0; font-weight:900; font-size: 1.5rem; letter-spacing: -0.5px;">📊 Summary Report</h2>
+                <div id="summaryModalDate" style="font-size: 0.95rem; color: var(--accent); font-weight: 700; margin-top: 4px;"></div>
             </div>
             
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
-                <div style="background:var(--card); padding:16px; border-radius:8px; border-top: 4px solid #22c55e; border-left:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border); text-align:center;">
-                    <div id="smTotalScans" style="font-size:2rem; font-weight:800; color:#22c55e;">0</div>
-                    <div style="font-size:0.8rem; font-weight:700; color:var(--muted); text-transform:uppercase;">Total Scans</div>
+            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px;">
+                <div style="grid-column: span 2; background:var(--card, #fff); padding:20px 16px; border-radius:12px; border-bottom: 4px solid #22c55e; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align:center;">
+                    <div id="smTotalScans" style="font-size:2.5rem; font-weight:900; color:#22c55e; line-height:1;">0</div>
+                    <div style="font-size:0.85rem; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:8px;">Total Scans</div>
                 </div>
-                <div style="background:var(--card); padding:16px; border-radius:8px; border-top: 4px solid #3b82f6; border-left:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border); text-align:center;">
-                    <div id="smTotalPouch" style="font-size:2rem; font-weight:800; color:#3b82f6;">0</div>
-                    <div style="font-size:0.8rem; font-weight:700; color:var(--muted); text-transform:uppercase;">Total Pouches</div>
+                <div style="background:var(--card, #fff); padding:16px 12px; border-radius:12px; border-bottom: 4px solid #3b82f6; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align:center;">
+                    <div id="smTotalPouch" style="font-size:2rem; font-weight:900; color:#3b82f6; line-height:1;">0</div>
+                    <div style="font-size:0.75rem; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:8px;">Pouches</div>
                 </div>
-                <div style="background:var(--card); padding:16px; border-radius:8px; border-top: 4px solid #a78bfa; border-left:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border); text-align:center;">
-                    <div id="smTotalBulky" style="font-size:2rem; font-weight:800; color:#a78bfa;">0</div>
-                    <div style="font-size:0.8rem; font-weight:700; color:var(--muted); text-transform:uppercase;">Total Bulky</div>
-                </div>
-                <div style="background:var(--card); padding:16px; border-radius:8px; border-top: 4px solid #c084fc; border-left:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border); text-align:center;">
-                    <div id="smTotalBatches" style="font-size:2rem; font-weight:800; color:#c084fc;">0</div>
-                    <div style="font-size:0.8rem; font-weight:700; color:var(--muted); text-transform:uppercase;">Total Batches</div>
+                <div style="background:var(--card, #fff); padding:16px 12px; border-radius:12px; border-bottom: 4px solid #a78bfa; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align:center;">
+                    <div id="smTotalBulky" style="font-size:2rem; font-weight:900; color:#a78bfa; line-height:1;">0</div>
+                    <div style="font-size:0.75rem; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:8px;">Bulky</div>
                 </div>
             </div>
 
-            <div class="table-wrap" style="border: none; max-height: unset; overflow: visible;">
-                <table class="summary-table">
-                    <thead>
+            <div class="table-wrap" style="border: none; max-height: unset; overflow-x: auto; overflow-y: hidden; border-radius: 8px; background: var(--card, #fff); box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <table class="summary-table" style="min-width: 400px; width: 100%;">
+                    <thead style="background: rgba(0,0,0,0.03);">
                         <tr>
-                            <th>Batch</th>
-                            <th>Total Scans</th>
-                            <th>Pouches</th>
-                            <th>Bulky</th>
+                            <th style="padding: 12px 16px; font-size: 0.75rem; text-transform: uppercase;">Batch</th>
+                            <th style="padding: 12px 8px; font-size: 0.75rem; text-align: center; text-transform: uppercase;">Scans</th>
+                            <th style="padding: 12px 8px; font-size: 0.75rem; text-align: center; text-transform: uppercase;">Pouches</th>
+                            <th style="padding: 12px 8px; font-size: 0.75rem; text-align: center; text-transform: uppercase;">Bulky</th>
                         </tr>
                     </thead>
                     <tbody id="summaryTableBody">
                     </tbody>
                 </table>
             </div>
-
-            <div style="display:flex; justify-content:flex-end; margin-top:24px;">
-                <button class="pg-btn" onclick="closeSummaryReport()">Close</button>
+            
+            <div style="display:flex; justify-content:center; margin-top:20px;">
+                <button class="pg-btn" onclick="closeSummaryReport()" style="width: 100%; max-width: 300px; background: var(--accent); color: white; border: none; padding: 14px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer;">
+                    Done
+                </button>
             </div>
         </div>
     </div>
@@ -670,11 +675,11 @@ $config = require __DIR__ . '/api/core/config.php';
                             }
 
                             return `
-                            <tr>
-                                <td>${badgeHtml}</td>
-                                <td><span class="badge" style="background:rgba(34, 197, 94, 0.15); color:#22c55e; font-weight:800;">${b.count} Items</span></td>
-                                <td><span class="badge" style="background:rgba(59, 130, 246, 0.15); color:#3b82f6;">${b.pouch_count || 0} Pouches</span></td>
-                                <td><span class="badge" style="background:rgba(139, 92, 246, 0.15); color:#a78bfa;">${b.bulky_count || 0} Bulky</span></td>
+                            <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                <td style="padding: 12px 16px;">${badgeHtml}</td>
+                                <td style="text-align: center; padding: 12px 8px;"><span class="badge" style="background:rgba(34, 197, 94, 0.15); color:#22c55e; font-weight:800;">${b.count}</span></td>
+                                <td style="text-align: center; padding: 12px 8px;"><span class="badge" style="background:rgba(59, 130, 246, 0.15); color:#3b82f6; font-weight:800;">${b.pouch_count || 0}</span></td>
+                                <td style="text-align: center; padding: 12px 8px;"><span class="badge" style="background:rgba(139, 92, 246, 0.15); color:#a78bfa; font-weight:800;">${b.bulky_count || 0}</span></td>
                             </tr>
                             `;
                         }).join("");
@@ -683,7 +688,6 @@ $config = require __DIR__ . '/api/core/config.php';
                     document.getElementById("smTotalScans").innerText = totalScans;
                     document.getElementById("smTotalPouch").innerText = totalPouch;
                     document.getElementById("smTotalBulky").innerText = totalBulky;
-                    document.getElementById("smTotalBatches").innerText = batches.length;
                 } else {
                     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: #ef4444">Error: ${data.message}</td></tr>`;
                 }
