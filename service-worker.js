@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ella-scanner-v4'; // Bumped version to force cache clear
+const CACHE_NAME = 'ella-scanner-v5'; // Bumped version to force cache clear
 const ASSETS = [
   'css/bootstrap-5.3.8-dist/css/bootstrap.min.css',
   'icon-512.png',
@@ -38,8 +38,9 @@ self.addEventListener('fetch', (event) => {
     })
       .then((networkResponse) => {
         return caches.open(CACHE_NAME).then((cache) => {
-          // Don't cache API POST requests
-          if (event.request.method === 'GET') {
+          // Only cache static assets dynamically (JS, CSS, images).
+          // NEVER cache .php files or API calls to prevent stale data!
+          if (event.request.method === 'GET' && !event.request.url.includes('.php') && !event.request.url.includes('/api/')) {
             cache.put(event.request, networkResponse.clone());
           }
           return networkResponse;

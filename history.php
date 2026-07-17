@@ -108,7 +108,6 @@ $config = require __DIR__ . '/api/core/config.php';
         <div style="background:var(--bg); margin: 5% auto; padding: 24px; border-radius: 12px; width: 90%; max-width: 900px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
                 <h2 style="margin:0; font-weight:800;">📊 Summary Report <span id="summaryModalDate" style="font-size:1rem; color:var(--muted); font-weight:600; margin-left:12px;"></span></h2>
-                <button onclick="closeSummaryReport()" style="background:none; border:none; color:var(--text); font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
             
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
@@ -143,6 +142,10 @@ $config = require __DIR__ . '/api/core/config.php';
                     <tbody id="summaryTableBody">
                     </tbody>
                 </table>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; margin-top:24px;">
+                <button class="pg-btn" onclick="closeSummaryReport()">Close</button>
             </div>
         </div>
     </div>
@@ -659,13 +662,16 @@ $config = require __DIR__ . '/api/core/config.php';
                             totalPouch += (b.pouch_count || 0);
                             totalBulky += (b.bulky_count || 0);
 
+                            let badgeHtml = '';
+                            if (b.id === "NORMAL") {
+                                badgeHtml = `<span class="badge" style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-family:monospace; font-size:0.85rem; border: 1px solid rgba(239, 68, 68, 0.3);">UNBATCHED</span>`;
+                            } else {
+                                badgeHtml = `<span class="badge" style="background:rgba(192, 132, 252, 0.15); color:#d8b4fe; font-family:monospace; font-size:0.85rem; border: 1px solid rgba(192, 132, 252, 0.3);">BATCH-${b.id}</span>`;
+                            }
+
                             return `
                             <tr>
-                                <td>
-                                    <span class="badge" style="background:rgba(192, 132, 252, 0.15); color:#d8b4fe; font-family:monospace; font-size:0.85rem; border: 1px solid rgba(192, 132, 252, 0.3);">
-                                        BATCH-${b.id}
-                                    </span>
-                                </td>
+                                <td>${badgeHtml}</td>
                                 <td><span class="badge" style="background:rgba(34, 197, 94, 0.15); color:#22c55e; font-weight:800;">${b.count} Items</span></td>
                                 <td><span class="badge" style="background:rgba(59, 130, 246, 0.15); color:#3b82f6;">${b.pouch_count || 0} Pouches</span></td>
                                 <td><span class="badge" style="background:rgba(139, 92, 246, 0.15); color:#a78bfa;">${b.bulky_count || 0} Bulky</span></td>

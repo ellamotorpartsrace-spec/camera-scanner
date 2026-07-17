@@ -20,6 +20,12 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Aggressive No-Cache Headers to prevent iOS Safari/Chrome from caching stale PHP pages
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: Wed, 11 Jan 1984 05:00:00 GMT");
+
 // ── Persistent Cookie Recovery ──
 // If not authenticated in session, check for a valid persistent cookie
 if (!isset($_SESSION['authenticated'])) {

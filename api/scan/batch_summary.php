@@ -22,31 +22,39 @@ try {
 
     $sql = "
         SELECT 
-            gs1_batch as id, 
+            IFNULL(gs1_batch, 'NORMAL') as id, 
             COUNT(*) as count,
             SUM(IF(parcel_size = 'POUCH', 1, 0)) as pouch_count,
             SUM(IF(parcel_size = 'BULKY', 1, 0)) as bulky_count
         FROM scans 
         WHERE $whereStr 
-          AND gs1_batch LIKE 'BATCH-%'
-        GROUP BY gs1_batch 
-        ORDER BY CAST(SUBSTRING_INDEX(gs1_batch, '-', -1) AS UNSIGNED) DESC
+        GROUP BY IFNULL(gs1_batch, 'NORMAL') 
+        ORDER BY IF(IFNULL(gs1_batch, 'NORMAL') = 'NORMAL', 1, 0) ASC, CAST(SUBSTRING_INDEX(IFNULL(gs1_batch, 'NORMAL'), '-', -1) AS UNSIGNED) DESC
     ";
     
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Clean up output to match JS expected format (id: number, count: number)
+    // Clean up output to match JS expected format
     $formatted = [];
     foreach ($batches as $b) {
-        $batchNum = (int)str_replace("BATCH-", "", $b['id']);
-        $formatted[] = [
-            "id" => $batchNum,
-            "count" => (int)$b['count'],
-            "pouch_count" => (int)$b['pouch_count'],
-            "bulky_count" => (int)$b['bulky_count']
-        ];
+        if ($b['id'] === 'NORMAL') {
+            $formatted[] = [
+                "id" => "NORMAL",
+                "count" => (int)$b['count'],
+                "pouch_count" => (int)$b['pouch_count'],
+                "bulky_count" => (int)$b['bulky_count']
+            ];
+        } else {
+            $batchNum = (int)str_replace("BATCH-", "", $b['id']);
+            $formatted[] = [
+                "id" => $batchNum,
+                "count" => (int)$b['count'],
+                "pouch_count" => (int)$b['pouch_count'],
+                "bulky_count" => (int)$b['bulky_count']
+            ];
+        }
     }
     
     echo json_encode(["status" => "success", "data" => $formatted]);
