@@ -112,15 +112,15 @@ $config = require __DIR__ . '/api/core/config.php';
                 ✖
             </button>
 
-            <div class="modal-header-flex" style="margin-bottom: 20px; padding-right: 40px;">
-                <h2 style="margin:0; font-weight:900; font-size: 1.5rem; letter-spacing: -0.5px;">📊 Summary Report</h2>
-                <div id="summaryModalDate" style="font-size: 0.95rem; color: var(--accent); font-weight: 700; margin-top: 4px;"></div>
+            <div class="modal-header-flex" style="margin-bottom: 24px; padding-right: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
+                <h2 style="margin:0; font-weight:900; font-size: 1.5rem; letter-spacing: -0.5px; width: 100%; padding-left: 20px;">📊 Summary Report</h2>
+                <div id="summaryModalDate" style="font-size: 0.95rem; color: var(--accent); font-weight: 700; margin-top: 6px; width: 100%; padding-left: 20px;"></div>
             </div>
             
             <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px;">
                 <div style="grid-column: span 2; background:var(--card, #fff); padding:20px 16px; border-radius:12px; border-bottom: 4px solid #22c55e; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align:center;">
                     <div id="smTotalScans" style="font-size:2.5rem; font-weight:900; color:#22c55e; line-height:1;">0</div>
-                    <div style="font-size:0.85rem; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:8px;">Total Scans</div>
+                    <div style="font-size:0.85rem; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:8px;">Saved Scans</div>
                 </div>
                 <div style="background:var(--card, #fff); padding:16px 12px; border-radius:12px; border-bottom: 4px solid #3b82f6; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align:center;">
                     <div id="smTotalPouch" style="font-size:2rem; font-weight:900; color:#3b82f6; line-height:1;">0</div>
@@ -698,6 +698,19 @@ $config = require __DIR__ . '/api/core/config.php';
         }
     </script>
 
+    <script>
+        // Sync Theme across all pages
+        const savedTheme = localStorage.getItem('ella-theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.body.classList.remove('light-mode');
+        } else if (savedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            document.body.classList.remove('dark-mode');
+        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
 </body>
 
 </html>

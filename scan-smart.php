@@ -482,7 +482,21 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
   </script>
 
   <script src="js/sound.js"></script>
-  <script src="js/scanner-smart.js?v=24"></script>
+  <script src="js/scanner-smart.js?v=25"></script>
+
+  <script>
+    // Sync Theme across all pages
+    const savedTheme = localStorage.getItem('ella-theme');
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+      document.body.classList.remove('light-mode');
+    } else if (savedTheme === 'light') {
+      document.body.classList.add('light-mode');
+      document.body.classList.remove('dark-mode');
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.body.classList.add('dark-mode');
+    }
+  </script>
 </body>
 
 </html>

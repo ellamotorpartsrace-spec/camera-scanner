@@ -69,8 +69,10 @@ window.addEventListener("load", () => {
   const toggle = document.getElementById("returnModeToggle");
   const mText = document.getElementById("modeText");
   if (toggle && mText) {
+    if (localStorage.getItem("smartReturnMode") === "true") toggle.checked = true;
     mText.innerText = toggle.checked ? "Return Mode" : "Normal Mode";
     toggle.addEventListener("change", () => {
+      localStorage.setItem("smartReturnMode", toggle.checked);
       mText.innerText = toggle.checked ? "Return Mode" : "Normal Mode";
     });
   }
@@ -80,11 +82,13 @@ window.addEventListener("load", () => {
   const bText = document.getElementById("batchModeText");
   const batchAction = document.getElementById("batch-action-container");
   if (batchToggle && bText) {
+    if (localStorage.getItem("smartBatchMode") === "true") batchToggle.checked = true;
     isBatchMode = batchToggle.checked;
     bText.innerText = isBatchMode ? "Batch: ON" : "Batch: OFF";
     if (batchAction) batchAction.style.display = isBatchMode ? "block" : "none";
 
     batchToggle.addEventListener("change", () => {
+      localStorage.setItem("smartBatchMode", batchToggle.checked);
       isBatchMode = batchToggle.checked;
       bText.innerText = isBatchMode ? "Batch: ON" : "Batch: OFF";
       if (batchAction) batchAction.style.display = isBatchMode ? "block" : "none";

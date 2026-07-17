@@ -563,6 +563,7 @@ try {
 
     function applyTheme(dark) {
       body.classList.toggle('dark-mode', dark);
+      body.classList.toggle('light-mode', !dark);
       icon.textContent = dark ? '☀️' : '🌙';
     }
 
