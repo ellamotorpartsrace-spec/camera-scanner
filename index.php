@@ -538,19 +538,6 @@ try {
         <p class="card-desc">View, filter, search &amp; export scan records.</p>
       </a>
 
-      <!-- Summary Report -->
-      <a href="report.php" class="mode-card animate-in delay-3">
-        <div class="card-icon-wrap">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="20" x2="18" y2="10"></line>
-            <line x1="12" y1="20" x2="12" y2="4"></line>
-            <line x1="6" y1="20" x2="6" y2="14"></line>
-          </svg>
-        </div>
-        <div class="card-label">Summary Report</div>
-        <p class="card-desc">View batch totals, pouches, and bulky counts.</p>
-      </a>
-
     </div>
 
     <a href="?logout=1" class="logout-btn animate-in delay-3">Logout Securely</a>

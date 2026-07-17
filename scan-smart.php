@@ -482,7 +482,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
   </script>
 
   <script src="js/sound.js"></script>
-  <script src="js/scanner-smart.js?v=21"></script>
+  <script src="js/scanner-smart.js?v=22"></script>
 </body>
 
 </html>

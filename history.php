@@ -68,6 +68,7 @@ $config = require __DIR__ . '/api/core/config.php';
         <button onclick="preset('week')">This Week</button>
         <div style="flex:1"></div>
         <button id="batchDeleteBtn" class="pg-btn" style="display:none; background: #ef4444; color: white; border-color: #ef4444;" onclick="deleteSelected()">🗑️ Delete Selected</button>
+        <button class="pg-btn" onclick="openSummaryReport()" style="background:#a855f7; border-color:#a855f7; color:white">📊 Summary Report</button>
         <a href="#" class="pg-btn" onclick="exportCSV()">Export CSV</a>
     </div>
 
@@ -101,6 +102,50 @@ $config = require __DIR__ . '/api/core/config.php';
     </div>
 
     <div class="pagination" id="pagination"></div>
+
+    <!-- Summary Report Modal -->
+    <div id="summaryModal" class="modal" tabindex="-1" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; overflow-y:auto;">
+        <div style="background:var(--bg); margin: 5% auto; padding: 24px; border-radius: 12px; width: 90%; max-width: 900px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+                <h2 style="margin:0; font-weight:800;">📊 Summary Report <span id="summaryModalDate" style="font-size:1rem; color:var(--muted); font-weight:600; margin-left:12px;"></span></h2>
+                <button onclick="closeSummaryReport()" style="background:none; border:none; color:var(--text); font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                <div style="background:var(--card); padding:16px; border-radius:8px; border-top: 4px solid #22c55e; border-left:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border); text-align:center;">
+                    <div id="smTotalScans" style="font-size:2rem; font-weight:800; color:#22c55e;">0</div>
+                    <div style="font-size:0.8rem; font-weight:700; color:var(--muted); text-transform:uppercase;">Total Scans</div>
+                </div>
+                <div style="background:var(--card); padding:16px; border-radius:8px; border-top: 4px solid #3b82f6; border-left:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border); text-align:center;">
+                    <div id="smTotalPouch" style="font-size:2rem; font-weight:800; color:#3b82f6;">0</div>
+                    <div style="font-size:0.8rem; font-weight:700; color:var(--muted); text-transform:uppercase;">Total Pouches</div>
+                </div>
+                <div style="background:var(--card); padding:16px; border-radius:8px; border-top: 4px solid #a78bfa; border-left:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border); text-align:center;">
+                    <div id="smTotalBulky" style="font-size:2rem; font-weight:800; color:#a78bfa;">0</div>
+                    <div style="font-size:0.8rem; font-weight:700; color:var(--muted); text-transform:uppercase;">Total Bulky</div>
+                </div>
+                <div style="background:var(--card); padding:16px; border-radius:8px; border-top: 4px solid #c084fc; border-left:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border); text-align:center;">
+                    <div id="smTotalBatches" style="font-size:2rem; font-weight:800; color:#c084fc;">0</div>
+                    <div style="font-size:0.8rem; font-weight:700; color:var(--muted); text-transform:uppercase;">Total Batches</div>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Batch</th>
+                            <th>Total Scans</th>
+                            <th>Pouches</th>
+                            <th>Bulky</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summaryTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
     <script>
         /* =========================
@@ -570,6 +615,75 @@ $config = require __DIR__ . '/api/core/config.php';
             } catch (err) {
                 console.error(err);
                 alert("Failed to delete records.");
+            }
+        }
+
+        /* =========================
+           SUMMARY REPORT MODAL
+        ========================= */
+        function closeSummaryReport() {
+            document.getElementById('summaryModal').style.display = 'none';
+        }
+
+        async function openSummaryReport() {
+            document.getElementById('summaryModal').style.display = 'block';
+            const tbody = document.getElementById('summaryTableBody');
+            
+            // Set date subtitle
+            const from = document.getElementById("fromDate").value;
+            const to = document.getElementById("toDate").value;
+            if (from === to) {
+                document.getElementById('summaryModalDate').innerText = `(${from})`;
+            } else {
+                document.getElementById('summaryModalDate').innerText = `(${from} - ${to})`;
+            }
+
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: var(--muted)">Loading data...</td></tr>`;
+            
+            try {
+                const res = await fetch(`api/scan/batch_summary.php?from=${from}&to=${to}`);
+                const data = await res.json();
+
+                if (data.status === "success") {
+                    const batches = data.data;
+                    
+                    let totalScans = 0;
+                    let totalPouch = 0;
+                    let totalBulky = 0;
+
+                    if (batches.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: var(--muted)">No batches found for this date range.</td></tr>`;
+                    } else {
+                        tbody.innerHTML = batches.map(b => {
+                            totalScans += b.count;
+                            totalPouch += (b.pouch_count || 0);
+                            totalBulky += (b.bulky_count || 0);
+
+                            return `
+                            <tr>
+                                <td>
+                                    <span class="badge" style="background:rgba(192, 132, 252, 0.15); color:#d8b4fe; font-family:monospace; font-size:0.85rem; border: 1px solid rgba(192, 132, 252, 0.3);">
+                                        BATCH-${b.id}
+                                    </span>
+                                </td>
+                                <td><span class="badge" style="background:rgba(34, 197, 94, 0.15); color:#22c55e; font-weight:800;">${b.count} Items</span></td>
+                                <td><span class="badge" style="background:rgba(59, 130, 246, 0.15); color:#3b82f6;">${b.pouch_count || 0} Pouches</span></td>
+                                <td><span class="badge" style="background:rgba(139, 92, 246, 0.15); color:#a78bfa;">${b.bulky_count || 0} Bulky</span></td>
+                            </tr>
+                            `;
+                        }).join("");
+                    }
+
+                    document.getElementById("smTotalScans").innerText = totalScans;
+                    document.getElementById("smTotalPouch").innerText = totalPouch;
+                    document.getElementById("smTotalBulky").innerText = totalBulky;
+                    document.getElementById("smTotalBatches").innerText = batches.length;
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: #ef4444">Error: ${data.message}</td></tr>`;
+                }
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: #ef4444">Failed to load report data</td></tr>`;
             }
         }
     </script>

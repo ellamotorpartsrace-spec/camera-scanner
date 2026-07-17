@@ -21,7 +21,9 @@ $results = [
     "total" => count($scans),
     "saved" => 0,
     "duplicates" => 0,
-    "errors" => 0
+    "errors" => 0,
+    "pouch_saved" => 0,
+    "bulky_saved" => 0
 ];
 
 try {
@@ -151,6 +153,11 @@ try {
             $results["duplicates"]++;
         } else {
             $results["saved"]++;
+            if ($parcelSize === 'BULKY') {
+                $results["bulky_saved"]++;
+            } else {
+                $results["pouch_saved"]++;
+            }
         }
 
         $fetchStmt->execute([":code" => $codeValue]);

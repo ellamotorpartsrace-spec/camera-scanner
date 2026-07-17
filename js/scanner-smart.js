@@ -765,6 +765,8 @@ async function submitBatch() {
     alert(`Batch Complete!\n\nSaved: ${r.saved}\nDuplicates: ${r.duplicates}\nErrors: ${r.errors}`);
     
     successScanCount += r.saved;
+    pouchCount += r.pouch_saved || 0;
+    bulkyCount += r.bulky_saved || 0;
     updateCounterUI();
     
     batchQueue = [];
