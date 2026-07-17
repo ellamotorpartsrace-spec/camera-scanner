@@ -773,6 +773,7 @@ async function submitBatch() {
     pouchCount += r.pouch_saved || 0;
     bulkyCount += r.bulky_saved || 0;
     updateCounterUI();
+    saveSession();
     
     batchQueue = [];
     saveQueues();
@@ -805,7 +806,10 @@ async function syncOfflineQueue() {
     
     const r = data.results;
     successScanCount += r.saved;
+    pouchCount += r.pouch_saved || 0;
+    bulkyCount += r.bulky_saved || 0;
     updateCounterUI();
+    saveSession();
     
     offlineQueue = [];
     saveQueues();
