@@ -308,14 +308,14 @@ require_once __DIR__ . '/api/core/session.php';
                             totalPouch += (b.pouch_count || 0);
                             totalBulky += (b.bulky_count || 0);
 
-                            return \`
+                            return `
                             <tr>
-                                <td><span class="badge-batch">BATCH-\${b.id}</span></td>
-                                <td><span class="badge-total">\${b.count} Items</span></td>
-                                <td><span class="badge-pouch">\${b.pouch_count || 0} Pouches</span></td>
-                                <td><span class="badge-bulky">\${b.bulky_count || 0} Bulky</span></td>
+                                <td><span class="badge-batch">BATCH-${b.id}</span></td>
+                                <td><span class="badge-total">${b.count} Items</span></td>
+                                <td><span class="badge-pouch">${b.pouch_count || 0} Pouches</span></td>
+                                <td><span class="badge-bulky">${b.bulky_count || 0} Bulky</span></td>
                             </tr>
-                            \`;
+                            `;
                         }).join("");
                     }
 
@@ -325,11 +325,11 @@ require_once __DIR__ . '/api/core/session.php';
                     document.getElementById("totalBulkyCard").innerText = totalBulky;
                     document.getElementById("totalBatchesCard").innerText = batches.length;
                 } else {
-                    tbody.innerHTML = \`<tr><td colspan="4" style="text-align:center; padding: 40px; color: #ef4444">Error: \${data.message}</td></tr>\`;
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: #ef4444">Error: ${data.message}</td></tr>`;
                 }
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = \`<tr><td colspan="4" style="text-align:center; padding: 40px; color: #ef4444">Failed to load report data</td></tr>\`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: #ef4444">Failed to load report data</td></tr>`;
             }
         }
 
