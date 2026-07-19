@@ -23,11 +23,9 @@ $config = require __DIR__ . '/api/core/config.php';
     <script>
         // Sync Theme instantly before body loads
         const savedTheme = localStorage.getItem('ella-theme');
-        if (savedTheme === 'dark') {
-            document.documentElement.classList.add('dark-mode');
-        } else if (savedTheme === 'light') {
+        if (savedTheme === 'light') {
             document.documentElement.classList.add('light-mode');
-        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        } else {
             document.documentElement.classList.add('dark-mode');
         }
     </script>

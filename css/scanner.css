@@ -13,17 +13,6 @@
     --border: #e5e7eb;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-        --bg: #020617;
-        --card: #0f172a;
-        --text: #e5e7eb;
-        --muted: #94a3b8;
-        --accent: #3b82f6;
-        --border: #1e293b;
-    }
-}
-
 body.dark-mode, html.dark-mode, :root[data-theme="dark"] {
     --bg: #020617;
     --card: #0f172a;

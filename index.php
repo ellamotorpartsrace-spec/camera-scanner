@@ -38,11 +38,9 @@ try {
   <link rel="stylesheet" href="css/scanner.css?v=3">
   <script>
     const savedTheme = localStorage.getItem('ella-theme');
-    if (savedTheme === 'dark') {
-      document.documentElement.classList.add('dark-mode');
-    } else if (savedTheme === 'light') {
+    if (savedTheme === 'light') {
       document.documentElement.classList.add('light-mode');
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    } else {
       document.documentElement.classList.add('dark-mode');
     }
   </script>
@@ -582,7 +580,7 @@ try {
     if (saved !== null) {
       applyTheme(saved === 'dark');
     } else {
-      applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
+      applyTheme(true); // default to dark
     }
 
     btn.addEventListener('click', () => {
