@@ -659,8 +659,29 @@ $config = require __DIR__ . '/api/core/config.php';
 
             tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: var(--muted)">Loading data...</td></tr>`;
             
+            // Build URL with all current state filters
+            let url = `api/scan/batch_summary.php?from=${from}&to=${to}`;
+            if (state.courier) {
+                url += `&courier=${encodeURIComponent(state.courier)}`;
+            }
+            if (state.size) {
+                url += `&size=${encodeURIComponent(state.size)}`;
+            }
+            if (state.platform) {
+                url += `&platform=${encodeURIComponent(state.platform)}`;
+            }
+            if (state.type) {
+                url += `&type=${encodeURIComponent(state.type)}`;
+            }
+            if (state.batch) {
+                url += `&batch=${encodeURIComponent(state.batch)}`;
+            }
+            if (state.search) {
+                url += `&search=${encodeURIComponent(state.search)}`;
+            }
+
             try {
-                const res = await fetch(`api/scan/batch_summary.php?from=${from}&to=${to}`);
+                const res = await fetch(url);
                 const data = await res.json();
 
                 if (data.status === "success") {

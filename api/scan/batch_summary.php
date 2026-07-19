@@ -9,16 +9,56 @@ require_once __DIR__ . '/../core/db.php';
 try {
     // We fetch all unique batches submitted today, along with the count of items in each batch.
     // They are ordered descending, so the newest batch is on top.
-    $from = $_GET['from'] ?? null;
-    $to = $_GET['to'] ?? null;
+    $from     = $_GET['from']     ?? null;
+    $to       = $_GET['to']       ?? null;
+    $courier  = $_GET['courier']  ?? null;
+    $size     = $_GET['size']     ?? null;
+    $search   = $_GET['search']   ?? null;
+    $platform = $_GET['platform'] ?? null;
+    $type     = $_GET['type']     ?? null;
+    $batch    = $_GET['batch']    ?? null;
 
-    $whereStr = "DATE(created_at) = CURDATE()";
+    $where = ["DATE(scanned_at) = CURDATE()"];
     $params = [];
+
     if ($from && $to) {
-        $whereStr = "DATE(created_at) >= :from AND DATE(created_at) <= :to";
+        $where[0] = "DATE(scanned_at) >= :from AND DATE(scanned_at) <= :to";
         $params[':from'] = $from;
         $params[':to'] = $to;
     }
+
+    if ($courier) {
+        $where[] = "courier = :courier";
+        $params[':courier'] = $courier;
+    }
+
+    if ($size) {
+        $where[] = "parcel_size = :size";
+        $params[':size'] = $size;
+    }
+
+    if ($search) {
+        $where[] = "code_value LIKE :search";
+        $params[':search'] = '%' . $search . '%';
+    }
+
+    if ($platform) {
+        $where[] = "platform = :platform";
+        $params[':platform'] = $platform;
+    }
+
+    if ($batch) {
+        $where[] = "gs1_batch = :batch";
+        $params[':batch'] = "BATCH-" . $batch;
+    }
+
+    if ($type === 'returned') {
+        $where[] = "returned_at IS NOT NULL";
+    } elseif ($type === 'normal') {
+        $where[] = "returned_at IS NULL";
+    }
+
+    $whereStr = implode(" AND ", $where);
 
     $sql = "
         SELECT 
