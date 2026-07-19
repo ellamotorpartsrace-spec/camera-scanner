@@ -17,9 +17,20 @@ $config = require __DIR__ . '/api/core/config.php';
     <title>Scan History</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="css/scanner.css">
+    <link rel="stylesheet" href="css/scanner.css?v=3">
 
-    <link rel="stylesheet" href="css/history.css">
+    <link rel="stylesheet" href="css/history.css?v=2">
+    <script>
+        // Sync Theme instantly before body loads
+        const savedTheme = localStorage.getItem('ella-theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        } else if (savedTheme === 'light') {
+            document.documentElement.classList.add('light-mode');
+        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
 </head>
 
 <body>
@@ -134,7 +145,7 @@ $config = require __DIR__ . '/api/core/config.php';
 
             <div class="table-wrap" style="border: none; max-height: unset; overflow-x: auto; overflow-y: hidden; border-radius: 8px; background: var(--card, #fff); box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                 <table class="summary-table" style="min-width: 400px; width: 100%;">
-                    <thead style="background: rgba(0,0,0,0.03);">
+                    <thead style="background: var(--bg);">
                         <tr>
                             <th style="padding: 12px 16px; font-size: 0.75rem; text-transform: uppercase;">Batch</th>
                             <th style="padding: 12px 8px; font-size: 0.75rem; text-align: center; text-transform: uppercase;">Scans</th>
@@ -675,7 +686,7 @@ $config = require __DIR__ . '/api/core/config.php';
                             }
 
                             return `
-                            <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                            <tr style="border-bottom: 1px solid var(--border);">
                                 <td style="padding: 12px 16px;">${badgeHtml}</td>
                                 <td style="text-align: center; padding: 12px 8px;"><span class="badge" style="background:rgba(34, 197, 94, 0.15); color:#22c55e; font-weight:800;">${b.count}</span></td>
                                 <td style="text-align: center; padding: 12px 8px;"><span class="badge" style="background:rgba(59, 130, 246, 0.15); color:#3b82f6; font-weight:800;">${b.pouch_count || 0}</span></td>
@@ -695,20 +706,6 @@ $config = require __DIR__ . '/api/core/config.php';
                 console.error(err);
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: #ef4444">Failed to load report data</td></tr>`;
             }
-        }
-    </script>
-
-    <script>
-        // Sync Theme across all pages
-        const savedTheme = localStorage.getItem('ella-theme');
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-mode');
-            document.body.classList.remove('light-mode');
-        } else if (savedTheme === 'light') {
-            document.body.classList.add('light-mode');
-            document.body.classList.remove('dark-mode');
-        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.body.classList.add('dark-mode');
         }
     </script>
 </body>

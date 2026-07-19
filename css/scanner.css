@@ -24,7 +24,7 @@
     }
 }
 
-body.dark-mode, :root[data-theme="dark"] {
+body.dark-mode, html.dark-mode, :root[data-theme="dark"] {
     --bg: #020617;
     --card: #0f172a;
     --text: #e5e7eb;
@@ -33,7 +33,7 @@ body.dark-mode, :root[data-theme="dark"] {
     --border: #1e293b;
 }
 
-body.light-mode {
+body.light-mode, html.light-mode {
     --bg: #f8fafc;
     --card: #ffffff;
     --text: #020617;

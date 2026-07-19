@@ -35,6 +35,17 @@ try {
   <meta name="theme-color" content="#6366f1" />
   <link rel="apple-touch-icon" href="logo.png" />
   <link rel="stylesheet" href="css/bootstrap-5.3.8-dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="css/scanner.css?v=3">
+  <script>
+    const savedTheme = localStorage.getItem('ella-theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark-mode');
+    } else if (savedTheme === 'light') {
+      document.documentElement.classList.add('light-mode');
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark-mode');
+    }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -562,8 +573,8 @@ try {
     const icon = document.getElementById('themeIcon');
 
     function applyTheme(dark) {
-      body.classList.toggle('dark-mode', dark);
-      body.classList.toggle('light-mode', !dark);
+      document.documentElement.classList.toggle('dark-mode', dark);
+      document.documentElement.classList.toggle('light-mode', !dark);
       icon.textContent = dark ? '☀️' : '🌙';
     }
 
@@ -575,7 +586,7 @@ try {
     }
 
     btn.addEventListener('click', () => {
-      const isDark = body.classList.contains('dark-mode');
+      const isDark = document.documentElement.classList.contains('dark-mode');
       localStorage.setItem('ella-theme', isDark ? 'light' : 'dark');
       applyTheme(!isDark);
     });
