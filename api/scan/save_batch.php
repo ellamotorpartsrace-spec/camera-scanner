@@ -5,11 +5,32 @@ header("Access-Control-Allow-Methods: POST");
 
 require_once __DIR__ . '/../core/db.php';
 
-$data = json_decode(file_get_contents("php://input"), true);
+$rawInput = file_get_contents("php://input");
+$data = json_decode($rawInput, true);
 
-if (!is_array($data) || !isset($data['scans']) || !is_array($data['scans'])) {
+if (!is_array($data)) {
     http_response_code(400);
-    echo json_encode(["status" => "error", "message" => "Invalid payload"]);
+    $err = ["status" => "error", "message" => "Invalid payload - not JSON", "raw" => substr($rawInput, 0, 200), "json_err" => json_last_error_msg()];
+    file_put_contents(__DIR__ . '/batch_error.log', date('Y-m-d H:i:s') . " - " . json_encode($err) . "\n", FILE_APPEND);
+    echo json_encode($err);
+    exit;
+}
+
+// If 'scans' is missing or not an array (e.g. an object), reject cleanly
+if (!isset($data['scans'])) {
+    http_response_code(400);
+    $err = ["status" => "error", "message" => "Invalid payload - missing 'scans' key", "keys" => array_keys($data)];
+    file_put_contents(__DIR__ . '/batch_error.log', date('Y-m-d H:i:s') . " - " . json_encode($err) . "\n", FILE_APPEND);
+    echo json_encode($err);
+    exit;
+}
+
+// Accept an object/assoc-array by converting it to a simple list
+if (!is_array($data['scans'])) {
+    http_response_code(400);
+    $err = ["status" => "error", "message" => "Invalid payload - 'scans' is not an array", "type" => gettype($data['scans'])];
+    file_put_contents(__DIR__ . '/batch_error.log', date('Y-m-d H:i:s') . " - " . json_encode($err) . "\n", FILE_APPEND);
+    echo json_encode($err);
     exit;
 }
 

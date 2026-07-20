@@ -682,10 +682,21 @@ function formatDateTime(ts) {
 function loadQueues() {
   try {
     const b = localStorage.getItem("smartBatchQueue");
-    if (b) batchQueue = JSON.parse(b) || [];
+    if (b) {
+      const parsed = JSON.parse(b);
+      // Guard: must be an array
+      batchQueue = Array.isArray(parsed) ? parsed : [];
+    }
     const o = localStorage.getItem("smartOfflineQueue");
-    if (o) offlineQueue = JSON.parse(o) || [];
-  } catch(e) {}
+    if (o) {
+      const parsedO = JSON.parse(o);
+      offlineQueue = Array.isArray(parsedO) ? parsedO : [];
+    }
+  } catch(e) {
+    console.warn("Failed to load queues from localStorage, resetting.", e);
+    batchQueue = [];
+    offlineQueue = [];
+  }
   updateBatchUI();
   fetchSubmittedBatches();
 }
@@ -755,6 +766,13 @@ function handleOnline() {
 }
 
 async function submitBatch() {
+  // Ensure batchQueue is always a valid array (guard against localStorage corruption)
+  if (!Array.isArray(batchQueue)) {
+    console.warn("batchQueue was not an array, resetting.", batchQueue);
+    batchQueue = [];
+    saveQueues();
+  }
+
   if (batchQueue.length === 0) {
     alert("Batch is empty!");
     return;
@@ -763,17 +781,35 @@ async function submitBatch() {
   const submitBtn = document.getElementById("submitBatchBtn");
   if (submitBtn) submitBtn.innerText = "🚀 Uploading...";
 
+  // Build safe payload, filtering out any non-object entries
+  const safeScans = batchQueue.filter(s => s && typeof s === 'object' && s.code);
+  if (safeScans.length === 0) {
+    alert("Batch is empty or contains invalid data. Please clear and rescan.");
+    batchQueue = [];
+    saveQueues();
+    updateBatchUI();
+    if (submitBtn) submitBtn.innerHTML = `🚀 Submit Batch (<span id="batch-submit-count">0</span>)`;
+    return;
+  }
+
+  const payload = JSON.stringify({ scans: safeScans });
+  console.log("Submitting batch payload:", payload.substring(0, 200));
+
   try {
     const res = await fetch("api/scan/save_batch.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scans: batchQueue })
+      body: payload
     });
     
     let data;
     try { data = await res.json(); } catch(e) { throw new Error(`Server returned HTTP ${res.status} without JSON`); }
     
-    if (!res.ok || data.status === "error") throw new Error(data.message || "Batch upload failed");
+    if (!res.ok || data.status === "error") {
+      // Log the server's debug info
+      console.error("Server batch error:", data);
+      throw new Error(data.message || "Batch upload failed");
+    }
 
     const r = data.results;
     alert(`Batch Complete!\n\nSaved: ${r.saved}\nDuplicates: ${r.duplicates}\nErrors: ${r.errors}`);
@@ -788,7 +824,7 @@ async function submitBatch() {
     saveQueues();
     fetchSubmittedBatches();
   } catch (err) {
-    console.error(err);
+    console.error("submitBatch error:", err);
     alert("Batch Upload Error: " + err.message);
   } finally {
     if (submitBtn) submitBtn.innerHTML = `🚀 Submit Batch (<span id="batch-submit-count">${batchQueue.length}</span>)`;
