@@ -145,6 +145,7 @@ $config = require __DIR__ . '/api/core/config.php';
                 <table class="summary-table" style="min-width: 400px; width: 100%;">
                     <thead style="background: var(--bg);">
                         <tr>
+                            <th style="padding: 12px 16px; width: 40px; text-align:center;"><input type="checkbox" id="smSelectAll" checked onclick="toggleSmSelectAll(this)"></th>
                             <th style="padding: 12px 16px; font-size: 0.75rem; text-transform: uppercase;">Batch</th>
                             <th style="padding: 12px 8px; font-size: 0.75rem; text-align: center; text-transform: uppercase;">Scans</th>
                             <th style="padding: 12px 8px; font-size: 0.75rem; text-align: center; text-transform: uppercase;">Pouches</th>
@@ -641,6 +642,33 @@ $config = require __DIR__ . '/api/core/config.php';
         function closeSummaryReport() {
             document.getElementById('summaryModal').style.display = 'none';
         }
+        
+        function toggleSmSelectAll(master) {
+            const checkboxes = document.querySelectorAll('.sm-row-checkbox');
+            checkboxes.forEach(cb => cb.checked = master.checked);
+            recalcSummaryTotals();
+        }
+
+        function recalcSummaryTotals() {
+            let tScans = 0, tPouch = 0, tBulky = 0;
+            const checkboxes = document.querySelectorAll('.sm-row-checkbox:checked');
+            checkboxes.forEach(cb => {
+                tScans += parseInt(cb.getAttribute('data-scans') || 0);
+                tPouch += parseInt(cb.getAttribute('data-pouch') || 0);
+                tBulky += parseInt(cb.getAttribute('data-bulky') || 0);
+            });
+            
+            // Sync master checkbox
+            const allCheckboxes = document.querySelectorAll('.sm-row-checkbox');
+            const master = document.getElementById('smSelectAll');
+            if (master && allCheckboxes.length > 0) {
+                master.checked = (checkboxes.length === allCheckboxes.length);
+            }
+
+            document.getElementById("smTotalScans").innerText = tScans;
+            document.getElementById("smTotalPouch").innerText = tPouch;
+            document.getElementById("smTotalBulky").innerText = tBulky;
+        }
 
         async function openSummaryReport() {
             document.getElementById('summaryModal').style.display = 'block';
@@ -690,13 +718,9 @@ $config = require __DIR__ . '/api/core/config.php';
                     let totalBulky = 0;
 
                     if (batches.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: var(--muted)">No batches found for this date range.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--muted)">No batches found for this date range.</td></tr>`;
                     } else {
                         tbody.innerHTML = batches.map(b => {
-                            totalScans += b.count;
-                            totalPouch += (b.pouch_count || 0);
-                            totalBulky += (b.bulky_count || 0);
-
                             let badgeHtml = '';
                             if (b.id === "NORMAL") {
                                 badgeHtml = `<span class="badge" style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-family:monospace; font-size:0.85rem; border: 1px solid rgba(239, 68, 68, 0.3);">UNBATCHED</span>`;
@@ -706,6 +730,9 @@ $config = require __DIR__ . '/api/core/config.php';
 
                             return `
                             <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 12px 16px; text-align:center;">
+                                    <input type="checkbox" class="sm-row-checkbox" checked data-scans="${b.count}" data-pouch="${b.pouch_count || 0}" data-bulky="${b.bulky_count || 0}" onclick="recalcSummaryTotals()">
+                                </td>
                                 <td style="padding: 12px 16px;">${badgeHtml}</td>
                                 <td style="text-align: center; padding: 12px 8px;"><span class="badge" style="background:rgba(34, 197, 94, 0.15); color:#22c55e; font-weight:800;">${b.count}</span></td>
                                 <td style="text-align: center; padding: 12px 8px;"><span class="badge" style="background:rgba(59, 130, 246, 0.15); color:#3b82f6; font-weight:800;">${b.pouch_count || 0}</span></td>
@@ -714,12 +741,11 @@ $config = require __DIR__ . '/api/core/config.php';
                             `;
                         }).join("");
                     }
-
-                    document.getElementById("smTotalScans").innerText = totalScans;
-                    document.getElementById("smTotalPouch").innerText = totalPouch;
-                    document.getElementById("smTotalBulky").innerText = totalBulky;
+                    
+                    document.getElementById('smSelectAll').checked = true;
+                    recalcSummaryTotals();
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: #ef4444">Error: ${data.message}</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: #ef4444">Error: ${data.message}</td></tr>`;
                 }
             } catch (err) {
                 console.error(err);
