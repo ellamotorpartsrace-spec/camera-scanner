@@ -1,7 +1,5 @@
 <?php
-ob_start(); // Buffer ALL output — prevents PHP warnings from corrupting JSON
-error_reporting(0); // Suppress notices/warnings from leaking into response
-
+require_once __DIR__ . '/../core/bootstrap.php';
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST");
