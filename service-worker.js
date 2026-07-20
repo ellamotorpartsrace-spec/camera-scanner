@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ella-scanner-v8'; // Bumped version to force cache clear
+const CACHE_NAME = 'ella-scanner-v9'; // Bumped version to force cache clear
 const ASSETS = [
   'css/bootstrap-5.3.8-dist/css/bootstrap.min.css',
   'icon-512.png',

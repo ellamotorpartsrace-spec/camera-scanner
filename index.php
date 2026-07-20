@@ -65,7 +65,7 @@ try {
       --font: 'Inter', system-ui, sans-serif;
     }
 
-    body.dark-mode {
+    body.dark-mode, html.dark-mode {
       --body-bg: #060818;
       --surface: rgba(20, 28, 58, 0.72);
       --surface-border: rgba(99, 102, 241, 0.18);
