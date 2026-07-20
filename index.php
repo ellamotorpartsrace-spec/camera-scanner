@@ -35,7 +35,7 @@ try {
   <meta name="theme-color" content="#6366f1" />
   <link rel="apple-touch-icon" href="logo.png" />
   <link rel="stylesheet" href="css/bootstrap-5.3.8-dist/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="css/scanner.css?v=3">
+  <link rel="stylesheet" href="css/scanner.css?v=4">
   <script>
     const savedTheme = localStorage.getItem('ella-theme');
     if (savedTheme === 'light') {

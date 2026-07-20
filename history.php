@@ -17,9 +17,9 @@ $config = require __DIR__ . '/api/core/config.php';
     <title>Scan History</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="css/scanner.css?v=3">
+    <link rel="stylesheet" href="css/scanner.css?v=4">
 
-    <link rel="stylesheet" href="css/history.css?v=2">
+    <link rel="stylesheet" href="css/history.css?v=3">
     <script>
         // Sync Theme instantly before body loads
         const savedTheme = localStorage.getItem('ella-theme');

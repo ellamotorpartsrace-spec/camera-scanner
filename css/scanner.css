@@ -149,10 +149,10 @@ h2 {
     }
 }
 
-@media (prefers-color-scheme: dark) {
-    .options-grid {
-        background: rgba(255, 255, 255, .03);
-    }
+
+/* Dark mode: apply when .dark-mode is on html element (scanner website toggle) */
+html.dark-mode .options-grid {
+    background: rgba(255, 255, 255, .03);
 }
 
 /* =========================
@@ -250,10 +250,9 @@ button:disabled {
     transition: all 0.3s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-    #status-pill {
-        background: rgba(255, 255, 255, 0.05);
-    }
+
+html.dark-mode #status-pill {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 /* =========================
@@ -311,10 +310,9 @@ button:disabled {
     transition: transform 0.2s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-    .history li {
-        background: rgba(255, 255, 255, 0.02);
-    }
+
+html.dark-mode .history li {
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .history li.placeholder {

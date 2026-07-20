@@ -17,6 +17,11 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="ELLA Smart Scanner – automatically detects QR codes and barcodes." />
 
+  <script>
+    // Apply theme BEFORE CSS renders to prevent flash
+    var t = localStorage.getItem('ella-theme');
+    document.documentElement.classList.add(t === 'light' ? 'light-mode' : 'dark-mode');
+  </script>
   <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
   <link rel="stylesheet" href="css/scanner.css" />
 
@@ -484,17 +489,6 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
   <script src="js/sound.js"></script>
   <script src="js/scanner-smart.js?v=26"></script>
 
-  <script>
-    // Sync Theme across all pages
-    const savedTheme = localStorage.getItem('ella-theme');
-    if (savedTheme === 'light') {
-      document.documentElement.classList.add('light-mode');
-      document.documentElement.classList.remove('dark-mode');
-    } else {
-      document.documentElement.classList.add('dark-mode');
-      document.documentElement.classList.remove('light-mode');
-    }
-  </script>
 </body>
 
 </html>

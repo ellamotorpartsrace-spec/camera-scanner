@@ -15,6 +15,11 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     <meta charset="UTF-8">
     <title>ELLA • Manual Entry</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+        // Apply theme BEFORE CSS renders to prevent flash
+        var t = localStorage.getItem('ella-theme');
+        document.documentElement.classList.add(t === 'light' ? 'light-mode' : 'dark-mode');
+    </script>
 </head>
 
 <style>

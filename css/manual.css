@@ -13,15 +13,23 @@
   --border: #e5e7eb;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #020617;
-    --card: #0f172a;
-    --text: #e5e7eb;
-    --muted: #94a3b8;
-    --accent: #3b82f6;
-    --border: #1e293b;
-  }
+/* Dark mode controlled by scanner website toggle (not OS system theme) */
+html.dark-mode {
+  --bg: #020617;
+  --card: #0f172a;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --accent: #3b82f6;
+  --border: #1e293b;
+}
+
+html.light-mode {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #020617;
+  --muted: #64748b;
+  --accent: #2563eb;
+  --border: #e5e7eb;
 }
 
 * {
