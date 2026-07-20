@@ -602,12 +602,20 @@ function saveSession() {
 }
 
 function clearSession() {
-  if (!confirm("Clear counters and recent scans?")) return;
+  if (!confirm("Clear counters, recent scans, and pending batches?")) return;
   localStorage.removeItem(SESSION_KEY);
   localStorage.removeItem("smartRecentScans");
+  localStorage.removeItem("smartBatchQueue");
+  localStorage.removeItem("smartOfflineQueue");
+  
   recentScans = [];
+  batchQueue = [];
+  offlineQueue = [];
+  
   scanCount = successScanCount = pouchCount = bulkyCount = 0;
   updateCounterUI();
+  updateBatchUI();
+  
   const hl = document.getElementById("historyList");
   if (hl) hl.innerHTML = '<li class="placeholder">No scans yet</li>';
   flash("success");
