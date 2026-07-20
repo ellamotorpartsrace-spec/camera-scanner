@@ -1,4 +1,7 @@
 <?php
+ob_start(); // Buffer ALL output — prevents PHP warnings from corrupting JSON
+error_reporting(0); // Suppress notices/warnings from leaking into response
+
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST");
@@ -12,6 +15,7 @@ if (!is_array($data)) {
     http_response_code(400);
     $err = ["status" => "error", "message" => "Invalid payload - not JSON", "raw" => substr($rawInput, 0, 200), "json_err" => json_last_error_msg()];
     file_put_contents(__DIR__ . '/batch_error.log', date('Y-m-d H:i:s') . " - " . json_encode($err) . "\n", FILE_APPEND);
+    ob_clean();
     echo json_encode($err);
     exit;
 }
@@ -21,6 +25,7 @@ if (!isset($data['scans'])) {
     http_response_code(400);
     $err = ["status" => "error", "message" => "Invalid payload - missing 'scans' key", "keys" => array_keys($data)];
     file_put_contents(__DIR__ . '/batch_error.log', date('Y-m-d H:i:s') . " - " . json_encode($err) . "\n", FILE_APPEND);
+    ob_clean();
     echo json_encode($err);
     exit;
 }
@@ -30,6 +35,7 @@ if (!is_array($data['scans'])) {
     http_response_code(400);
     $err = ["status" => "error", "message" => "Invalid payload - 'scans' is not an array", "type" => gettype($data['scans'])];
     file_put_contents(__DIR__ . '/batch_error.log', date('Y-m-d H:i:s') . " - " . json_encode($err) . "\n", FILE_APPEND);
+    ob_clean();
     echo json_encode($err);
     exit;
 }
@@ -196,6 +202,7 @@ try {
 
     $pdo->commit();
 
+    ob_clean(); // Discard any stray output (PHP warnings, BOM, etc.)
     echo json_encode([
         "status" => "success",
         "results" => $results
@@ -207,6 +214,7 @@ try {
     }
     error_log("BATCH SAVE ERROR: " . $e->getMessage());
     http_response_code(500);
+    ob_clean(); // Discard any stray output
     echo json_encode([
         "status" => "error", 
         "message" => "Batch save failed: " . $e->getMessage()
