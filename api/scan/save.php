@@ -13,16 +13,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/../core/db.php';
 
 // ── Robust input reader ──
-$rawInput = (string) file_get_contents("php://input");
-$rawInput = preg_replace('/^\xef\xbb\xbf/', '', $rawInput); // strip UTF-8 BOM
-$rawInput = trim($rawInput);
+// Check $_POST['payload'] FIRST (set when JS sends FormData),
+// then fall back to php://input for raw JSON body.
+$rawInput = '';
 
-// Fallback to form-encoded body
-if (empty($rawInput) && !empty($_POST['payload'])) {
+if (!empty($_POST['payload'])) {
     $rawInput = $_POST['payload'];
-}
-if (empty($rawInput) && !empty($_POST['data'])) {
+} elseif (!empty($_POST['data'])) {
     $rawInput = $_POST['data'];
+} else {
+    $rawInput = (string) file_get_contents("php://input");
+    $rawInput = preg_replace('/^\xef\xbb\xbf/', '', $rawInput);
+    $rawInput = trim($rawInput);
 }
 
 $data = null;

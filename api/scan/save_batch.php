@@ -13,32 +13,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/../core/db.php';
 
 // ── Robust input reader ──
-// Hostinger/nginx proxies can sometimes deliver the body in different ways.
-// Try every known strategy before giving up.
+// Check $_POST['payload'] FIRST (set when JS sends FormData or URLEncoded),
+// then fall back to php://input for raw JSON body.
 $rawInput = '';
 $data = null;
 
-// Strategy 1: Standard php://input (works on most servers)
-$rawInput = (string) file_get_contents("php://input");
-$rawInput = preg_replace('/^\xef\xbb\xbf/', '', $rawInput); // strip UTF-8 BOM
-$rawInput = trim($rawInput);
-
-// Strategy 2: Fall back to $_POST['payload'] or $_POST['data'] (form-encoded fallback)
-if (empty($rawInput) && !empty($_POST['payload'])) {
+if (!empty($_POST['payload'])) {
     $rawInput = $_POST['payload'];
-}
-if (empty($rawInput) && !empty($_POST['data'])) {
+} elseif (!empty($_POST['data'])) {
     $rawInput = $_POST['data'];
+} else {
+    $rawInput = (string) file_get_contents("php://input");
+    $rawInput = preg_replace('/^\xef\xbb\xbf/', '', $rawInput); // strip UTF-8 BOM
+    $rawInput = trim($rawInput);
 }
 
 if (!empty($rawInput)) {
     $data = json_decode($rawInput, true);
 }
 
-// Strategy 3: If $_POST itself IS the structured data (when sent as form-encoded)
+// Strategy 3: If $_POST itself IS the structured data
 if ($data === null && !empty($_POST['scans'])) {
     $data = $_POST;
 }
+
 
 
 if (!is_array($data)) {
