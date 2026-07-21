@@ -25,6 +25,38 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
   <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
   <link rel="stylesheet" href="css/scanner.css" />
 
+  <!-- Force SW & Cache Reset v12: clears any stuck old service workers -->
+  <script>
+    (function() {
+      var SW_EXPECTED = 'ella-scanner-v12';
+      var RESET_KEY   = 'sw_reset_done_v12';
+      if (localStorage.getItem(RESET_KEY)) return; // already reset this session
+
+      if ('serviceWorker' in navigator) {
+        // Unregister ALL service workers first
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          var kills = regs.map(function(r) { return r.unregister(); });
+          return Promise.all(kills);
+        }).then(function() {
+          // Clear ALL caches
+          return caches.keys().then(function(keys) {
+            return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+          });
+        }).then(function() {
+          localStorage.setItem(RESET_KEY, '1');
+          // Reload once with cache-busted URL to get fresh code
+          var url = window.location.href.split('?')[0] + '?_r=' + Date.now();
+          window.location.replace(url);
+        }).catch(function() {
+          localStorage.setItem(RESET_KEY, '1');
+        });
+      } else {
+        localStorage.setItem(RESET_KEY, '1');
+      }
+    })();
+  </script>
+
+
   <style>
     /* ── Smart Scanner Assets ── */
     .scanner-title {
