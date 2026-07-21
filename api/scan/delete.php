@@ -13,12 +13,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/../core/db.php';
 
 try {
-    // Read raw JSON body
-    $rawInput = file_get_contents("php://input");
-    $data = json_decode($rawInput, true);
+    // Robust input reader — FormData first, then php://input fallback
+    $rawInput = '';
+    if (!empty($_POST['payload'])) {
+        $rawInput = $_POST['payload'];
+    } elseif (!empty($_POST['data'])) {
+        $rawInput = $_POST['data'];
+    } else {
+        $rawInput = trim((string) file_get_contents("php://input"));
+        $rawInput = preg_replace('/^\xef\xbb\xbf/', '', $rawInput);
+    }
+
+    $data = !empty($rawInput) ? json_decode($rawInput, true) : null;
 
     if (!isset($data['codes']) || !is_array($data['codes']) || empty($data['codes'])) {
         http_response_code(400);
+        ob_clean();
         echo json_encode(["status" => "error", "message" => "No codes provided for deletion."]);
         exit;
     }
