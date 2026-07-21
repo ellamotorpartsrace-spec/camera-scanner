@@ -443,13 +443,15 @@ async function handleScan(value, type) {
       return;
     }
 
-    // Always send as FormData — bypasses Hostinger proxy that strips raw JSON bodies
+    // Send as plain JSON — SW v12 on Hostinger now correctly forwards POST bodies
     let res;
     let data;
-    const scanFd = new FormData();
-    scanFd.append("payload", JSON.stringify(scanData));
     try {
-      res = await fetch(API_ENDPOINT, { method: "POST", body: scanFd });
+      res = await fetch(API_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(scanData)
+      });
     } catch(fetchErr) {
       // Network Error (Offline)
       offlineQueue.push(scanData);
@@ -460,16 +462,12 @@ async function handleScan(value, type) {
       Sound.success();
       updateStatus(`⚠️ Saved Offline (${offlineQueue.length} pending)`);
       pushHistory(value, type, false, { timestamp: new Date().toISOString() });
-      handleOffline(); // update banner
+      handleOffline();
       setTimeout(resumeScanner, 500);
       return;
     }
 
-    try {
-      data = await res.json();
-    } catch(e) {
-      throw new Error(`Server returned HTTP ${res.status} without JSON.`);
-    }
+    try { data = await res.json(); } catch(e) { throw new Error(`Server returned HTTP ${res.status} without JSON.`); }
 
     if (!res.ok || data.status === "error") {
       throw new Error(data.message || `HTTP ${res.status} Error`);
@@ -803,18 +801,23 @@ async function submitBatch() {
   const payloadStr = JSON.stringify({ scans: safeScans });
   console.log("Submitting batch payload:", payloadStr.substring(0, 200));
 
-  // Always send as FormData — this bypasses Hostinger's proxy that strips raw JSON bodies
+  // Send as plain JSON — SW v12 correctly forwards POST bodies
   try {
-    const fd = new FormData();
-    fd.append("payload", payloadStr);
-    const res = await fetch("api/scan/save_batch.php", { method: "POST", body: fd });
+    const res = await fetch("api/scan/save_batch.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payloadStr
+    });
 
     let data;
-    try { data = await res.json(); } catch(e) { throw new Error(`Server returned HTTP ${res.status} without JSON`); }
+    const rawText = await res.text();
+    try { data = JSON.parse(rawText); } catch(e) { throw new Error("Server response not JSON: " + rawText.substring(0, 200)); }
 
     if (!res.ok || data.status === "error") {
       console.error("Server batch error:", data);
-      throw new Error(data.message || "Batch upload failed");
+      // Show full diagnostic in alert
+      const diag = data.raw_len !== undefined ? `\n\n[Debug] raw_len:${data.raw_len} post_keys:${JSON.stringify(data.post_keys)} ct:${data.content_type}` : '';
+      throw new Error((data.message || "Batch upload failed") + diag);
     }
 
     const r = data.results;
@@ -845,13 +848,15 @@ async function syncOfflineQueue() {
   const scansToSync = [...offlineQueue];
   
   try {
-    const syncFd = new FormData();
-    syncFd.append("payload", JSON.stringify({ scans: scansToSync }));
-    const res = await fetch("api/scan/save_batch.php", { method: "POST", body: syncFd });
-    
+    const res = await fetch("api/scan/save_batch.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scans: scansToSync })
+    });
     let data;
     try { data = await res.json(); } catch(e) { throw new Error("Offline Sync JSON Error"); }
     if (!res.ok || data.status === "error") throw new Error(data.message || "Offline sync failed");
+
     
     const r = data.results;
     successScanCount += r.saved;

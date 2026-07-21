@@ -29,6 +29,29 @@ $config = require __DIR__ . '/api/core/config.php';
             document.documentElement.classList.add('dark-mode');
         }
     </script>
+
+    <!-- Force SW & Cache Reset v12 -->
+    <script>
+    (function() {
+      var RESET_KEY = 'sw_reset_done_v12';
+      if (localStorage.getItem(RESET_KEY)) return;
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          return Promise.all(regs.map(function(r) { return r.unregister(); }));
+        }).then(function() {
+          return caches.keys().then(function(keys) {
+            return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+          });
+        }).then(function() {
+          localStorage.setItem(RESET_KEY, '1');
+          window.location.replace(window.location.href.split('?')[0] + '?_r=' + Date.now());
+        }).catch(function() { localStorage.setItem(RESET_KEY, '1'); });
+      } else {
+        localStorage.setItem(RESET_KEY, '1');
+      }
+    })();
+    </script>
+
 </head>
 
 <body>
@@ -610,9 +633,11 @@ $config = require __DIR__ . '/api/core/config.php';
             }
 
             try {
-                const fd = new FormData();
-                fd.append("payload", JSON.stringify({ codes: codes }));
-                const res = await fetch("api/scan/delete.php", { method: "POST", body: fd });
+                const res = await fetch("api/scan/delete.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ codes: codes })
+                });
 
                 if (!res.ok) {
                     throw new Error(`HTTP Error: ${res.status}`);
