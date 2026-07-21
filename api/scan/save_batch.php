@@ -12,19 +12,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/../core/db.php';
 
-$rawInput = file_get_contents("php://input");
-// Strip optional UTF-8 BOM
-$rawInput = preg_replace('/^[\xef\xbb\xbf]+/', '', $rawInput);
-$data = json_decode($rawInput, true);
+// ── Robust input reader ──
+// Hostinger/nginx proxies can sometimes deliver the body in different ways.
+// Try every known strategy before giving up.
+$rawInput = '';
+$data = null;
+
+// Strategy 1: Standard php://input (works on most servers)
+$rawInput = (string) file_get_contents("php://input");
+$rawInput = preg_replace('/^\xef\xbb\xbf/', '', $rawInput); // strip UTF-8 BOM
+$rawInput = trim($rawInput);
+
+// Strategy 2: Fall back to $_POST['payload'] or $_POST['data'] (form-encoded fallback)
+if (empty($rawInput) && !empty($_POST['payload'])) {
+    $rawInput = $_POST['payload'];
+}
+if (empty($rawInput) && !empty($_POST['data'])) {
+    $rawInput = $_POST['data'];
+}
+
+if (!empty($rawInput)) {
+    $data = json_decode($rawInput, true);
+}
+
+// Strategy 3: If $_POST itself IS the structured data (when sent as form-encoded)
+if ($data === null && !empty($_POST['scans'])) {
+    $data = $_POST;
+}
+
 
 if (!is_array($data)) {
     http_response_code(400);
-    $err = ["status" => "error", "message" => "Invalid payload - not JSON", "raw" => substr($rawInput, 0, 200), "json_err" => json_last_error_msg()];
+    $err = [
+        "status"       => "error",
+        "message"      => "Invalid payload - not JSON",
+        "raw"          => substr($rawInput, 0, 200),
+        "raw_len"      => strlen($rawInput),
+        "json_err"     => json_last_error_msg(),
+        "content_type" => $_SERVER['CONTENT_TYPE'] ?? 'none',
+        "method"       => $_SERVER['REQUEST_METHOD'] ?? 'none',
+        "post_keys"    => array_keys($_POST),
+    ];
     file_put_contents(__DIR__ . '/batch_error.log', date('Y-m-d H:i:s') . " - " . json_encode($err) . "\n", FILE_APPEND);
     ob_clean();
     echo json_encode($err);
     exit;
 }
+
 
 // If 'scans' is missing or not an array (e.g. an object), reject cleanly
 if (!isset($data['scans'])) {

@@ -12,15 +12,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/../core/db.php';
 
-$rawInput = file_get_contents("php://input");
-$rawInput = preg_replace('/^[\xef\xbb\xbf]+/', '', $rawInput);
-$data = json_decode($rawInput, true);
+// ── Robust input reader ──
+$rawInput = (string) file_get_contents("php://input");
+$rawInput = preg_replace('/^\xef\xbb\xbf/', '', $rawInput); // strip UTF-8 BOM
+$rawInput = trim($rawInput);
+
+// Fallback to form-encoded body
+if (empty($rawInput) && !empty($_POST['payload'])) {
+    $rawInput = $_POST['payload'];
+}
+if (empty($rawInput) && !empty($_POST['data'])) {
+    $rawInput = $_POST['data'];
+}
+
+$data = null;
+if (!empty($rawInput)) {
+    $data = json_decode($rawInput, true);
+}
 
 if (!is_array($data) || empty($data['code'])) {
     http_response_code(400);
-    echo json_encode(["status" => "error", "message" => "Invalid payload"]);
+    ob_clean();
+    echo json_encode(["status" => "error", "message" => "Invalid payload", "raw" => substr($rawInput, 0, 100), "json_err" => json_last_error_msg()]);
     exit;
 }
+
 
 $codeValue = trim($data['code']);
 $codeType = strtoupper(trim($data['type'] ?? 'UNKNOWN'));

@@ -443,7 +443,9 @@ async function handleScan(value, type) {
       return;
     }
 
+    // Attempt 1: standard JSON body
     let res;
+    let data;
     try {
       res = await fetch(API_ENDPOINT, {
         method: "POST",
@@ -464,17 +466,30 @@ async function handleScan(value, type) {
       setTimeout(resumeScanner, 500);
       return;
     }
-    
-    let data;
+
     try {
       data = await res.json();
     } catch(e) {
       throw new Error(`Server returned HTTP ${res.status} without JSON.`);
     }
 
+    // Attempt 2: if server got empty body (Hostinger proxy), retry with form-encoded fallback
+    if (data && data.raw_len === 0) {
+      console.warn("php://input was empty on server, retrying save with form-encoded fallback...");
+      const fd = new FormData();
+      fd.append("payload", JSON.stringify(scanData));
+      try {
+        res = await fetch(API_ENDPOINT, { method: "POST", body: fd });
+        data = await res.json();
+      } catch(e2) {
+        throw new Error("Both JSON and form-encoded save attempts failed.");
+      }
+    }
+
     if (!res.ok || data.status === "error") {
       throw new Error(data.message || `HTTP ${res.status} Error`);
     }
+
 
     scanCount++;
     updateCounterUI();
@@ -800,20 +815,40 @@ async function submitBatch() {
     return;
   }
 
-  const payload = JSON.stringify({ scans: safeScans });
-  console.log("Submitting batch payload:", payload.substring(0, 200));
+  const payloadObj = { scans: safeScans };
+  const payloadStr = JSON.stringify(payloadObj);
+  console.log("Submitting batch payload:", payloadStr.substring(0, 200));
 
-  try {
-    const res = await fetch("api/scan/save_batch.php", {
+  // Helper: post JSON with automatic fallback to form-encoded if php://input is empty
+  async function postJSON(url, obj) {
+    const jsonStr = JSON.stringify(obj);
+    // First attempt: standard JSON body
+    let r = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: payload
+      body: jsonStr
     });
+    let d;
+    try { d = await r.json(); } catch(e) { d = null; }
+    // If php://input was empty on the server, raw_len will be 0 — retry with form fallback
+    if (d && d.raw_len === 0) {
+      console.warn("php://input was empty, retrying with form-encoded fallback...");
+      const fd = new FormData();
+      fd.append("payload", jsonStr);
+      r = await fetch(url, { method: "POST", body: fd });
+      try { d = await r.json(); } catch(e) { d = null; }
+    }
+    return { res: r, data: d };
+  }
+
+  try {
+    const { res, data: preData } = await postJSON("api/scan/save_batch.php", payloadObj);
+    const res2 = res; // alias for error handling below
     
-    let data;
-    try { data = await res.json(); } catch(e) { throw new Error(`Server returned HTTP ${res.status} without JSON`); }
+    const data = preData;
+    if (!data) throw new Error(`Server returned HTTP ${res2.status} without JSON`);
     
-    if (!res.ok || data.status === "error") {
+    if (!res2.ok || data.status === "error") {
       // Log the server's debug info
       console.error("Server batch error:", data);
       throw new Error(data.message || "Batch upload failed");
