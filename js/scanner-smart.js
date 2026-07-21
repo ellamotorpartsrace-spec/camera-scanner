@@ -443,15 +443,13 @@ async function handleScan(value, type) {
       return;
     }
 
-    // Send as plain JSON — SW v12 on Hostinger now correctly forwards POST bodies
+    // Hostinger strips application/json bodies, so we MUST use FormData
     let res;
     let data;
+    const scanFd = new FormData();
+    scanFd.append("payload", JSON.stringify(scanData));
     try {
-      res = await fetch(API_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(scanData)
-      });
+      res = await fetch(API_ENDPOINT, { method: "POST", body: scanFd });
     } catch(fetchErr) {
       // Network Error (Offline)
       offlineQueue.push(scanData);
@@ -801,13 +799,11 @@ async function submitBatch() {
   const payloadStr = JSON.stringify({ scans: safeScans });
   console.log("Submitting batch payload:", payloadStr.substring(0, 200));
 
-  // Send as plain JSON — SW v12 correctly forwards POST bodies
+  // Hostinger strips application/json bodies, so we MUST use FormData
   try {
-    const res = await fetch("api/scan/save_batch.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: payloadStr
-    });
+    const fd = new FormData();
+    fd.append("payload", payloadStr);
+    const res = await fetch("api/scan/save_batch.php", { method: "POST", body: fd });
 
     let data;
     const rawText = await res.text();
@@ -848,11 +844,10 @@ async function syncOfflineQueue() {
   const scansToSync = [...offlineQueue];
   
   try {
-    const res = await fetch("api/scan/save_batch.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scans: scansToSync })
-    });
+    const syncFd = new FormData();
+    syncFd.append("payload", JSON.stringify({ scans: scansToSync }));
+    const res = await fetch("api/scan/save_batch.php", { method: "POST", body: syncFd });
+
     let data;
     try { data = await res.json(); } catch(e) { throw new Error("Offline Sync JSON Error"); }
     if (!res.ok || data.status === "error") throw new Error(data.message || "Offline sync failed");

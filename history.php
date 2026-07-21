@@ -633,11 +633,10 @@ $config = require __DIR__ . '/api/core/config.php';
             }
 
             try {
-                const res = await fetch("api/scan/delete.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ codes: codes })
-                });
+                const fd = new FormData();
+                fd.append("payload", JSON.stringify({ codes: codes }));
+                const res = await fetch("api/scan/delete.php", { method: "POST", body: fd });
+
 
                 if (!res.ok) {
                     throw new Error(`HTTP Error: ${res.status}`);

@@ -13,7 +13,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/../core/db.php';
 
 try {
-    $rawInput = trim((string) file_get_contents("php://input"));
+    $rawInput = '';
+    if (!empty($_POST['payload'])) {
+        $rawInput = $_POST['payload'];
+    } elseif (!empty($_POST['data'])) {
+        $rawInput = $_POST['data'];
+    } else {
+        $rawInput = trim((string) file_get_contents("php://input"));
+    }
+
     $data = !empty($rawInput) ? json_decode($rawInput, true) : null;
 
     if (!isset($data['codes']) || !is_array($data['codes']) || empty($data['codes'])) {
