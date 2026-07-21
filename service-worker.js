@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ella-scanner-v10'; // Bumped version to force cache clear
+const CACHE_NAME = 'ella-scanner-v11'; // Bumped to force phones to re-download fixed scanner-smart.js
 const ASSETS = [
   'css/bootstrap-5.3.8-dist/css/bootstrap.min.css',
   'icon-512.png',

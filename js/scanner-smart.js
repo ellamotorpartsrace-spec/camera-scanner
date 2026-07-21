@@ -443,15 +443,13 @@ async function handleScan(value, type) {
       return;
     }
 
-    // Attempt 1: standard JSON body
+    // Always send as FormData — bypasses Hostinger proxy that strips raw JSON bodies
     let res;
     let data;
+    const scanFd = new FormData();
+    scanFd.append("payload", JSON.stringify(scanData));
     try {
-      res = await fetch(API_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(scanData)
-      });
+      res = await fetch(API_ENDPOINT, { method: "POST", body: scanFd });
     } catch(fetchErr) {
       // Network Error (Offline)
       offlineQueue.push(scanData);
@@ -471,19 +469,6 @@ async function handleScan(value, type) {
       data = await res.json();
     } catch(e) {
       throw new Error(`Server returned HTTP ${res.status} without JSON.`);
-    }
-
-    // Attempt 2: if server got empty body (Hostinger proxy), retry with form-encoded fallback
-    if (data && data.raw_len === 0) {
-      console.warn("php://input was empty on server, retrying save with form-encoded fallback...");
-      const fd = new FormData();
-      fd.append("payload", JSON.stringify(scanData));
-      try {
-        res = await fetch(API_ENDPOINT, { method: "POST", body: fd });
-        data = await res.json();
-      } catch(e2) {
-        throw new Error("Both JSON and form-encoded save attempts failed.");
-      }
     }
 
     if (!res.ok || data.status === "error") {
@@ -815,41 +800,19 @@ async function submitBatch() {
     return;
   }
 
-  const payloadObj = { scans: safeScans };
-  const payloadStr = JSON.stringify(payloadObj);
+  const payloadStr = JSON.stringify({ scans: safeScans });
   console.log("Submitting batch payload:", payloadStr.substring(0, 200));
 
-  // Helper: post JSON with automatic fallback to form-encoded if php://input is empty
-  async function postJSON(url, obj) {
-    const jsonStr = JSON.stringify(obj);
-    // First attempt: standard JSON body
-    let r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: jsonStr
-    });
-    let d;
-    try { d = await r.json(); } catch(e) { d = null; }
-    // If php://input was empty on the server, raw_len will be 0 — retry with form fallback
-    if (d && d.raw_len === 0) {
-      console.warn("php://input was empty, retrying with form-encoded fallback...");
-      const fd = new FormData();
-      fd.append("payload", jsonStr);
-      r = await fetch(url, { method: "POST", body: fd });
-      try { d = await r.json(); } catch(e) { d = null; }
-    }
-    return { res: r, data: d };
-  }
-
+  // Always send as FormData — this bypasses Hostinger's proxy that strips raw JSON bodies
   try {
-    const { res, data: preData } = await postJSON("api/scan/save_batch.php", payloadObj);
-    const res2 = res; // alias for error handling below
-    
-    const data = preData;
-    if (!data) throw new Error(`Server returned HTTP ${res2.status} without JSON`);
-    
-    if (!res2.ok || data.status === "error") {
-      // Log the server's debug info
+    const fd = new FormData();
+    fd.append("payload", payloadStr);
+    const res = await fetch("api/scan/save_batch.php", { method: "POST", body: fd });
+
+    let data;
+    try { data = await res.json(); } catch(e) { throw new Error(`Server returned HTTP ${res.status} without JSON`); }
+
+    if (!res.ok || data.status === "error") {
       console.error("Server batch error:", data);
       throw new Error(data.message || "Batch upload failed");
     }
@@ -882,11 +845,9 @@ async function syncOfflineQueue() {
   const scansToSync = [...offlineQueue];
   
   try {
-    const res = await fetch("api/scan/save_batch.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scans: scansToSync })
-    });
+    const syncFd = new FormData();
+    syncFd.append("payload", JSON.stringify({ scans: scansToSync }));
+    const res = await fetch("api/scan/save_batch.php", { method: "POST", body: syncFd });
     
     let data;
     try { data = await res.json(); } catch(e) { throw new Error("Offline Sync JSON Error"); }
