@@ -381,7 +381,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
           <select id="courierSelect">
             <option value="">-- Select Courier --</option>
             <option value="JNT Express">JNT Express</option>
-            <option value="Shopee Express">Shopee Express</option>
+            <option value="Shopee Express" selected>Shopee Express</option>
             <option value="Lazada Express">Lazada Express</option>
             <option value="Flash Express">Flash Express</option>
             <option value="Others">Others</option>
@@ -393,7 +393,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
             <option value="">-- None --</option>
             <option value="Lazada">Lazada</option>
             <option value="TikTok">TikTok</option>
-            <option value="Shopee">Shopee</option>
+            <option value="Shopee" selected>Shopee</option>
           </select>
         </div>
         <div class="form-group">
