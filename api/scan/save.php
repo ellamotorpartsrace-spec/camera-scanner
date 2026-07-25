@@ -13,23 +13,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/../core/db.php';
 
 // ── Robust input reader ──
-// Check $_POST['payload'] FIRST (set when JS sends FormData),
-// then fall back to php://input for raw JSON body.
 $rawInput = '';
+$data = null;
 
 if (!empty($_POST['payload'])) {
     $rawInput = $_POST['payload'];
 } elseif (!empty($_POST['data'])) {
     $rawInput = $_POST['data'];
-} else {
-    $rawInput = (string) file_get_contents("php://input");
-    $rawInput = preg_replace('/^\xef\xbb\xbf/', '', $rawInput);
-    $rawInput = trim($rawInput);
+} elseif (!empty($_REQUEST['payload'])) {
+    $rawInput = $_REQUEST['payload'];
+} elseif (!empty($_REQUEST['data'])) {
+    $rawInput = $_REQUEST['data'];
 }
 
-$data = null;
 if (!empty($rawInput)) {
     $data = json_decode($rawInput, true);
+}
+
+if ($data === null) {
+    $phpInput = (string) file_get_contents("php://input");
+    $phpInput = preg_replace('/^\xef\xbb\xbf/', '', $phpInput);
+    $phpInput = trim($phpInput);
+
+    if (!empty($phpInput)) {
+        if (empty($rawInput)) {
+            $rawInput = $phpInput;
+        }
+        $data = json_decode($phpInput, true);
+
+        if ($data === null) {
+            parse_str($phpInput, $parsed);
+            if (!empty($parsed['payload'])) {
+                $rawInput = $parsed['payload'];
+                $data = json_decode($parsed['payload'], true);
+            } elseif (!empty($parsed['data'])) {
+                $rawInput = $parsed['data'];
+                $data = json_decode($parsed['data'], true);
+            }
+        }
+    }
 }
 
 if (!is_array($data) || empty($data['code'])) {
@@ -129,7 +151,7 @@ try {
         ":platform_upd2" => $platform
     ]);
 
-    $isDuplicate = ($stmt->rowCount() === 2);
+    $isDuplicate = ($stmt->rowCount() !== 1);
 
     $fetchSql = "SELECT id, update_count, created_at, scanned_at, returned_at FROM scans WHERE code_value = :code";
     $fetchStmt = $pdo->prepare($fetchSql);

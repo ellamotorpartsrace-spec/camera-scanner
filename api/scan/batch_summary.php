@@ -19,13 +19,21 @@ try {
     $type     = $_GET['type']     ?? null;
     $batch    = $_GET['batch']    ?? null;
 
-    $where = ["DATE(scanned_at) = CURDATE()"];
+    $where = [];
     $params = [];
 
-    if ($from && $to) {
-        $where[0] = "DATE(scanned_at) >= :from AND DATE(scanned_at) <= :to";
+    if ($from) {
+        $where[] = "DATE(scanned_at) >= :from";
         $params[':from'] = $from;
+    }
+
+    if ($to) {
+        $where[] = "DATE(scanned_at) <= :to";
         $params[':to'] = $to;
+    }
+
+    if (!$from && !$to && !$search && !$batch) {
+        $where[] = "DATE(scanned_at) = CURDATE()";
     }
 
     if ($courier) {

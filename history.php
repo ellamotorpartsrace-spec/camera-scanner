@@ -583,6 +583,8 @@ $config = require __DIR__ . '/api/core/config.php';
             if (platform) params.push(`platform=${encodeURIComponent(platform)}`);
             const type = document.getElementById("typeFilter").value;
             if (type) params.push(`type=${encodeURIComponent(type)}`);
+            const batch = document.getElementById("batchFilter") ? document.getElementById("batchFilter").value : "";
+            if (batch) params.push(`batch=${encodeURIComponent(batch)}`);
             if (search) params.push(`search=${encodeURIComponent(search)}`);
 
             if (params.length) {

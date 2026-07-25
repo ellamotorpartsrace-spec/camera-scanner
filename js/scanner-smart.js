@@ -769,6 +769,76 @@ function handleOnline() {
   }
 }
 
+/**
+ * Ultra-resilient POST payload handler with multi-strategy fallback.
+ * Attempt 1: URLSearchParams (x-www-form-urlencoded) - avoids boundary bugs & SW stream stripping
+ * Attempt 2: FormData (multipart/form-data) - fallback if URLSearchParams fails
+ * Attempt 3: Raw JSON payload
+ */
+async function postPayload(url, payloadStr) {
+  // Attempt 1: URLSearchParams (x-www-form-urlencoded)
+  try {
+    const params = new URLSearchParams();
+    params.append("payload", payloadStr);
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body: params
+    });
+    const rawText = await res.text();
+    let data;
+    try { data = JSON.parse(rawText); } catch(e) { throw new Error("Server response not JSON: " + rawText.substring(0, 200)); }
+    
+    if (res.ok && data && data.status !== "error") {
+      return data;
+    }
+    if (!data || data.raw_len !== 0) {
+      const diag = data && data.raw_len !== undefined ? `\n\n[Debug] raw_len:${data.raw_len} post_keys:${JSON.stringify(data.post_keys)} ct:${data.content_type}` : '';
+      throw new Error((data && data.message ? data.message : "Request failed") + diag);
+    }
+    console.warn("URLSearchParams post got raw_len:0, trying FormData fallback...");
+  } catch (err) {
+    if (!err.message.includes("raw_len:0")) throw err;
+  }
+
+  // Attempt 2: FormData (multipart/form-data)
+  try {
+    const fd = new FormData();
+    fd.append("payload", payloadStr);
+    const res = await fetch(url, { method: "POST", body: fd });
+    const rawText = await res.text();
+    let data;
+    try { data = JSON.parse(rawText); } catch(e) { throw new Error("Server response not JSON: " + rawText.substring(0, 200)); }
+    
+    if (res.ok && data && data.status !== "error") {
+      return data;
+    }
+    if (!data || data.raw_len !== 0) {
+      const diag = data && data.raw_len !== undefined ? `\n\n[Debug] raw_len:${data.raw_len} post_keys:${JSON.stringify(data.post_keys)} ct:${data.content_type}` : '';
+      throw new Error((data && data.message ? data.message : "Request failed") + diag);
+    }
+    console.warn("FormData post got raw_len:0, trying raw JSON fallback...");
+  } catch (err) {
+    if (!err.message.includes("raw_len:0")) throw err;
+  }
+
+  // Attempt 3: Raw JSON payload
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: payloadStr
+  });
+  const rawText = await res.text();
+  let data;
+  try { data = JSON.parse(rawText); } catch(e) { throw new Error("Server response not JSON: " + rawText.substring(0, 200)); }
+
+  if (!res.ok || data.status === "error") {
+    const diag = data && data.raw_len !== undefined ? `\n\n[Debug] raw_len:${data.raw_len} post_keys:${JSON.stringify(data.post_keys)} ct:${data.content_type}` : '';
+    throw new Error((data && data.message ? data.message : "Request failed") + diag);
+  }
+  return data;
+}
+
 async function submitBatch() {
   // Ensure batchQueue is always a valid array (guard against localStorage corruption)
   if (!Array.isArray(batchQueue)) {
@@ -799,22 +869,8 @@ async function submitBatch() {
   const payloadStr = JSON.stringify({ scans: safeScans });
   console.log("Submitting batch payload:", payloadStr.substring(0, 200));
 
-  // Hostinger strips application/json bodies, so we MUST use FormData
   try {
-    const fd = new FormData();
-    fd.append("payload", payloadStr);
-    const res = await fetch("api/scan/save_batch.php", { method: "POST", body: fd });
-
-    let data;
-    const rawText = await res.text();
-    try { data = JSON.parse(rawText); } catch(e) { throw new Error("Server response not JSON: " + rawText.substring(0, 200)); }
-
-    if (!res.ok || data.status === "error") {
-      console.error("Server batch error:", data);
-      // Show full diagnostic in alert
-      const diag = data.raw_len !== undefined ? `\n\n[Debug] raw_len:${data.raw_len} post_keys:${JSON.stringify(data.post_keys)} ct:${data.content_type}` : '';
-      throw new Error((data.message || "Batch upload failed") + diag);
-    }
+    const data = await postPayload("api/scan/save_batch.php", payloadStr);
 
     const r = data.results;
     alert(`Batch Complete!\n\nSaved: ${r.saved}\nDuplicates: ${r.duplicates}\nErrors: ${r.errors}`);
@@ -838,21 +894,18 @@ async function submitBatch() {
 }
 
 async function syncOfflineQueue() {
+  if (!Array.isArray(offlineQueue)) {
+    offlineQueue = [];
+    saveQueues();
+  }
   if (offlineQueue.length === 0) return;
   
   updateStatus(`Syncing ${offlineQueue.length} offline scans...`);
   const scansToSync = [...offlineQueue];
   
   try {
-    const syncFd = new FormData();
-    syncFd.append("payload", JSON.stringify({ scans: scansToSync }));
-    const res = await fetch("api/scan/save_batch.php", { method: "POST", body: syncFd });
+    const data = await postPayload("api/scan/save_batch.php", JSON.stringify({ scans: scansToSync }));
 
-    let data;
-    try { data = await res.json(); } catch(e) { throw new Error("Offline Sync JSON Error"); }
-    if (!res.ok || data.status === "error") throw new Error(data.message || "Offline sync failed");
-
-    
     const r = data.results;
     successScanCount += r.saved;
     pouchCount += r.pouch_saved || 0;

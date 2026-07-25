@@ -14,15 +14,47 @@ require_once __DIR__ . '/../core/db.php';
 
 try {
     $rawInput = '';
+    $data = null;
+
     if (!empty($_POST['payload'])) {
         $rawInput = $_POST['payload'];
     } elseif (!empty($_POST['data'])) {
         $rawInput = $_POST['data'];
-    } else {
-        $rawInput = trim((string) file_get_contents("php://input"));
+    } elseif (!empty($_REQUEST['payload'])) {
+        $rawInput = $_REQUEST['payload'];
+    } elseif (!empty($_REQUEST['data'])) {
+        $rawInput = $_REQUEST['data'];
     }
 
-    $data = !empty($rawInput) ? json_decode($rawInput, true) : null;
+    if (!empty($rawInput)) {
+        $data = json_decode($rawInput, true);
+    }
+
+    if ($data === null) {
+        $phpInput = (string) file_get_contents("php://input");
+        $phpInput = preg_replace('/^\xef\xbb\xbf/', '', $phpInput);
+        $phpInput = trim($phpInput);
+
+        if (!empty($phpInput)) {
+            if (empty($rawInput)) {
+                $rawInput = $phpInput;
+            }
+            $data = json_decode($phpInput, true);
+
+            if ($data === null) {
+                parse_str($phpInput, $parsed);
+                if (!empty($parsed['payload'])) {
+                    $rawInput = $parsed['payload'];
+                    $data = json_decode($parsed['payload'], true);
+                } elseif (!empty($parsed['data'])) {
+                    $rawInput = $parsed['data'];
+                    $data = json_decode($parsed['data'], true);
+                } elseif (!empty($parsed['codes']) && is_array($parsed['codes'])) {
+                    $data = $parsed;
+                }
+            }
+        }
+    }
 
     if (!isset($data['codes']) || !is_array($data['codes']) || empty($data['codes'])) {
         http_response_code(400);

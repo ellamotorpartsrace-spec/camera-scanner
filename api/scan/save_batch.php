@@ -13,8 +13,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/../core/db.php';
 
 // ── Robust input reader ──
-// Check $_POST['payload'] FIRST (set when JS sends FormData or URLEncoded),
-// then fall back to php://input for raw JSON body.
 $rawInput = '';
 $data = null;
 
@@ -22,14 +20,40 @@ if (!empty($_POST['payload'])) {
     $rawInput = $_POST['payload'];
 } elseif (!empty($_POST['data'])) {
     $rawInput = $_POST['data'];
-} else {
-    $rawInput = (string) file_get_contents("php://input");
-    $rawInput = preg_replace('/^\xef\xbb\xbf/', '', $rawInput); // strip UTF-8 BOM
-    $rawInput = trim($rawInput);
+} elseif (!empty($_REQUEST['payload'])) {
+    $rawInput = $_REQUEST['payload'];
+} elseif (!empty($_REQUEST['data'])) {
+    $rawInput = $_REQUEST['data'];
 }
 
 if (!empty($rawInput)) {
     $data = json_decode($rawInput, true);
+}
+
+if ($data === null) {
+    $phpInput = (string) file_get_contents("php://input");
+    $phpInput = preg_replace('/^\xef\xbb\xbf/', '', $phpInput); // strip UTF-8 BOM
+    $phpInput = trim($phpInput);
+
+    if (!empty($phpInput)) {
+        if (empty($rawInput)) {
+            $rawInput = $phpInput;
+        }
+        $data = json_decode($phpInput, true);
+
+        if ($data === null) {
+            parse_str($phpInput, $parsed);
+            if (!empty($parsed['payload'])) {
+                $rawInput = $parsed['payload'];
+                $data = json_decode($parsed['payload'], true);
+            } elseif (!empty($parsed['data'])) {
+                $rawInput = $parsed['data'];
+                $data = json_decode($parsed['data'], true);
+            } elseif (!empty($parsed['scans']) && is_array($parsed['scans'])) {
+                $data = $parsed;
+            }
+        }
+    }
 }
 
 // Strategy 3: If $_POST itself IS the structured data
@@ -92,8 +116,10 @@ $results = [
 ];
 
 try {
+    $pdo->beginTransaction();
+
     // Generate chronological Batch ID for today (e.g. BATCH-1, BATCH-2)
-    $batchSql = "SELECT gs1_batch FROM scans WHERE DATE(created_at) = CURDATE() AND gs1_batch LIKE 'BATCH-%' ORDER BY CAST(SUBSTRING_INDEX(gs1_batch, '-', -1) AS UNSIGNED) DESC LIMIT 1";
+    $batchSql = "SELECT gs1_batch FROM scans WHERE DATE(created_at) = CURDATE() AND gs1_batch LIKE 'BATCH-%' ORDER BY CAST(SUBSTRING_INDEX(gs1_batch, '-', -1) AS UNSIGNED) DESC LIMIT 1 FOR UPDATE";
     $batchStmt = $pdo->query($batchSql);
     $lastBatch = $batchStmt->fetchColumn();
 
@@ -102,8 +128,6 @@ try {
         $nextBatchNum = (int)$matches[1] + 1;
     }
     $assignedBatchId = "BATCH-" . $nextBatchNum;
-
-    $pdo->beginTransaction();
 
     $sql = "
         INSERT INTO scans (
@@ -213,7 +237,7 @@ try {
             ":gs1_batch_upd" => $assignedBatchId
         ]);
 
-        $isDuplicate = ($stmt->rowCount() === 2);
+        $isDuplicate = ($stmt->rowCount() !== 1);
         if ($isDuplicate) {
             $results["duplicates"]++;
         } else {

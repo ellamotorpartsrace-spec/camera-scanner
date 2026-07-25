@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ella-scanner-v12'; // v12: JS files excluded from cache so phones always get fresh code
+const CACHE_NAME = 'ella-scanner-v13'; // v13: Bypass SW fetch proxying for API/PHP to fix FormData stream stripping
 
 const STATIC_ASSETS = [
   'css/bootstrap-5.3.8-dist/css/bootstrap.min.css',
@@ -28,14 +28,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
 
-  // NEVER cache JS files, PHP files, or API calls — always fetch live
+  // NEVER cache or intercept JS files, PHP files, or API calls — let browser handle natively
   if (
     url.includes('.js') ||
     url.includes('.php') ||
     url.includes('/api/')
   ) {
-    event.respondWith(fetch(event.request));
-    return;
+    return; // Returning without event.respondWith lets browser execute native fetch without SW stream corruption
   }
 
   // Network-first for everything else (CSS, images)

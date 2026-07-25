@@ -11,7 +11,8 @@ $to       = $_GET['to']       ?? null;
 $courier  = $_GET['courier']  ?? null;
 $size     = $_GET['size']     ?? null;
 $platform = $_GET['platform'] ?? null;
-$type     = $_GET['type']     ?? null;
+$type     = $_GET['type']     ?? null;$batch    = $_GET['batch']    ?? null;
+$search   = $_GET['search']   ?? null;
 
 $where  = [];
 $params = [];
@@ -45,6 +46,20 @@ if ($size) {
 if ($platform) {
     $where[] = "platform = :platform";
     $params[':platform'] = $platform;
+}
+
+if ($batch) {
+    if ($batch === 'NORMAL') {
+        $where[] = "(gs1_batch IS NULL OR gs1_batch = '' OR gs1_batch = 'NORMAL')";
+    } else {
+        $where[] = "gs1_batch = :batch";
+        $params[':batch'] = "BATCH-" . $batch;
+    }
+}
+
+if ($search) {
+    $where[] = "code_value LIKE :search";
+    $params[':search'] = '%' . $search . '%';
 }
 
 if ($type === 'returned') {
