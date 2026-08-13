@@ -343,8 +343,11 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     <div class="card">
 
       <!-- Header -->
+      <div style="text-align: center; margin-bottom: 12px;">
+        <img src="logo.png?v=6" alt="ELLA SCANNER" style="height: 48px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(239, 68, 68, 0.4));" />
+      </div>
       <div class="scanner-title">
-        <h2>🔍 Smart Scanner</h2>
+        <h2>Smart Scanner</h2>
         <span id="type-badge">AUTO</span>
       </div>
       <p class="subtitle" style="text-align:center; margin-bottom: 1.25rem; color:var(--muted); font-size:0.9rem;">

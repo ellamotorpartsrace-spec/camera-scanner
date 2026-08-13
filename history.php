@@ -57,8 +57,9 @@ $config = require __DIR__ . '/api/core/config.php';
 <body>
 
     <div class="history-header">
-        <h2 style="margin:0;">
-            📋 Scan History
+        <h2 style="margin:0; display: flex; align-items: center; gap: 10px;">
+            <img src="logo.png?v=6" alt="ELLA SCANNER" style="height: 36px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(239, 68, 68, 0.4));" />
+            <span>Scan History</span>
             <span id="totalCount"></span>
         </h2>
         <a href="index.php" class="pg-btn">← Back</a>

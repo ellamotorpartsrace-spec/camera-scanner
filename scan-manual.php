@@ -60,8 +60,9 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
         <div class="card scanner-card">
 
             <!-- Header -->
-            <header class="scanner-header">
-                <h1>⌨️ Manual Entry</h1>
+            <header class="scanner-header" style="text-align: center;">
+                <img src="logo.png?v=6" alt="ELLA SCANNER" style="height: 48px; object-fit: contain; margin-bottom: 8px; filter: drop-shadow(0 2px 8px rgba(239, 68, 68, 0.4));" />
+                <h1>Manual Entry</h1>
                 <p class="subtitle">Type or paste a code, then press Enter</p>
             </header>
 

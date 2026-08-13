@@ -32,8 +32,8 @@ try {
   <title>ELLA Scanner – Select Mode</title>
   <meta name="description" content="ELLA Motor Parts Scanner – Smart, Manual & History" />
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#6366f1" />
-  <link rel="apple-touch-icon" href="logo.png" />
+  <meta name="theme-color" content="#ef4444" />
+  <link rel="apple-touch-icon" href="logo.png?v=5" />
   <link rel="stylesheet" href="css/bootstrap-5.3.8-dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="css/scanner.css?v=4">
   <script>
@@ -50,30 +50,30 @@ try {
   <style>
     /* ─── Design Tokens ─── */
     :root {
-      --accent: #6366f1;
-      --accent-2: #a855f7;
-      --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-      --body-bg: #f0f2f8;
+      --accent: #dc2626;
+      --accent-2: #f59e0b;
+      --accent-gradient: linear-gradient(135deg, #ef4444 0%, #ff8800 100%);
+      --body-bg: #f4f5f9;
       --surface: rgba(255, 255, 255, 0.75);
-      --surface-border: rgba(255, 255, 255, 0.5);
+      --surface-border: rgba(239, 68, 68, 0.15);
       --text: #0f172a;
       --muted: #64748b;
       --card-bg: #ffffff;
-      --shadow-sm: 0 2px 8px rgba(99, 102, 241, .08);
-      --shadow-lg: 0 16px 48px rgba(99, 102, 241, .14);
+      --shadow-sm: 0 2px 8px rgba(220, 38, 38, .08);
+      --shadow-lg: 0 16px 48px rgba(220, 38, 38, .14);
       --radius: 1.25rem;
       --font: 'Inter', system-ui, sans-serif;
     }
 
     body.dark-mode, html.dark-mode {
-      --body-bg: #060818;
-      --surface: rgba(20, 28, 58, 0.72);
-      --surface-border: rgba(99, 102, 241, 0.18);
+      --body-bg: #080a0f;
+      --surface: rgba(16, 20, 30, 0.82);
+      --surface-border: rgba(239, 68, 68, 0.25);
       --text: #e2e8f0;
       --muted: #94a3b8;
-      --card-bg: #0f172a;
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, .35);
-      --shadow-lg: 0 16px 48px rgba(0, 0, 0, .5);
+      --card-bg: #10141e;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, .45);
+      --shadow-lg: 0 16px 48px rgba(0, 0, 0, .6);
     }
 
     /* ─── Base ─── */
@@ -100,16 +100,16 @@ try {
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(ellipse 80% 60% at 20% -10%, rgba(99, 102, 241, .15) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 80% 110%, rgba(168, 85, 247, .12) 0%, transparent 55%);
+        radial-gradient(ellipse 80% 60% at 20% -10%, rgba(239, 68, 68, .15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 110%, rgba(245, 158, 11, .12) 0%, transparent 55%);
       pointer-events: none;
       z-index: 0;
     }
 
     body.dark-mode::before {
       background:
-        radial-gradient(ellipse 80% 60% at 20% -10%, rgba(99, 102, 241, .25) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 80% 110%, rgba(168, 85, 247, .2) 0%, transparent 55%);
+        radial-gradient(ellipse 80% 60% at 20% -10%, rgba(239, 68, 68, .25) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 110%, rgba(245, 158, 11, .2) 0%, transparent 55%);
     }
 
     .page-wrap {
@@ -130,23 +130,21 @@ try {
     }
 
     .logo-wrap {
-      width: 88px;
-      height: 88px;
+      width: 140px;
+      height: 100px;
       margin: 0 auto 1.25rem;
-      border-radius: 28px;
-      background: var(--accent-gradient);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 32px rgba(99, 102, 241, .4);
-      overflow: hidden;
       animation: logoFloat 3s ease-in-out infinite;
+      padding: 0;
     }
 
     .logo-wrap img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 24px rgba(239, 68, 68, 0.45));
     }
 
     @keyframes logoFloat {
@@ -489,7 +487,7 @@ try {
 
       <!-- Logo -->
       <div class="logo-wrap">
-        <img src="logo.png" alt="ELLA Motor Parts Logo" />
+        <img src="logo.png?v=6" alt="ELLA Motor Parts Logo" />
       </div>
 
       <h1 class="hero-title">ELLA Scanner</h1>

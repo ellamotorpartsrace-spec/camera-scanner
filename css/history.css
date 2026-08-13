@@ -14,7 +14,7 @@ body {
 /* NEW: Style for the Count Badge */
 .count-pill {
     display: inline-block;
-    background-color: var(--accent, #3b82f6);
+    background-color: var(--accent, #dc2626);
     /* Fallback blue if var missing */
     color: white;
     padding: 4px 12px;

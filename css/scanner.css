@@ -2,36 +2,42 @@
    CSS RESET & VARIABLES
 ========================= */
 :root {
-    --bg: #f8fafc;
+    --bg: #f4f5f9;
     --card: #ffffff;
-    --text: #020617;
+    --text: #0f172a;
     --muted: #64748b;
-    --accent: #2563eb;
+    --accent: #dc2626;
+    --accent-2: #f59e0b;
+    --accent-gradient: linear-gradient(135deg, #ef4444 0%, #ff8800 100%);
     --success: #22c55e;
     --warning: #f59e0b;
     --error: #ef4444;
-    --border: #e5e7eb;
+    --border: #e2e8f0;
 }
 
 body.dark-mode, html.dark-mode, :root[data-theme="dark"] {
-    --bg: #020617;
-    --card: #0f172a;
-    --text: #e5e7eb;
+    --bg: #080a0f;
+    --card: #10141e;
+    --text: #e2e8f0;
     --muted: #94a3b8;
-    --accent: #3b82f6;
-    --border: #1e293b;
+    --accent: #ef4444;
+    --accent-2: #fbbf24;
+    --accent-gradient: linear-gradient(135deg, #ef4444 0%, #ff8800 100%);
+    --border: rgba(239, 68, 68, 0.25);
 }
 
 body.light-mode, html.light-mode {
-    --bg: #f8fafc;
+    --bg: #f4f5f9;
     --card: #ffffff;
-    --text: #020617;
+    --text: #0f172a;
     --muted: #64748b;
-    --accent: #2563eb;
+    --accent: #dc2626;
+    --accent-2: #f59e0b;
+    --accent-gradient: linear-gradient(135deg, #ef4444 0%, #ff8800 100%);
     --success: #22c55e;
     --warning: #f59e0b;
     --error: #ef4444;
-    --border: #e5e7eb;
+    --border: #e2e8f0;
 }
 
 * {
