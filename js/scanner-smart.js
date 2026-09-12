@@ -142,12 +142,12 @@ const CourierDetector = {
   }
 };
 
-function speakMismatchAlert(text) {
+function speakVoice(text) {
   if ('speechSynthesis' in window) {
     try {
       window.speechSynthesis.cancel();
       const msg = new SpeechSynthesisUtterance(text);
-      msg.rate = 1.05;
+      msg.rate = 1.1;
       msg.pitch = 1.0;
       msg.lang = 'en-US';
       window.speechSynthesis.speak(msg);
@@ -155,6 +155,11 @@ function speakMismatchAlert(text) {
       console.warn("Speech synthesis error", e);
     }
   }
+}
+
+// Backward compatibility alias
+function speakMismatchAlert(text) {
+  speakVoice(text);
 }
 
 function highlightField(el) {
@@ -193,12 +198,18 @@ function showMismatchModal(mismatchData) {
     if (switchBtn) switchBtn.style.display = "none";
   }
 
-  if (modal) modal.classList.add("active");
+  if (modal) {
+    modal.style.display = "flex";
+    modal.classList.add("active");
+  }
 }
 
 function hideMismatchModal() {
   const modal = document.getElementById("mismatchModal");
-  if (modal) modal.classList.remove("active");
+  if (modal) {
+    modal.style.display = "none";
+    modal.classList.remove("active");
+  }
   pendingMismatchScan = null;
 }
 
@@ -283,6 +294,7 @@ let bulkyCount = 0;
    INIT
 ══════════════════════════════════════════ */
 window.addEventListener("load", () => {
+  hideMismatchModal();
   loadSession();
   loadQueues();
   restoreCounterUI();
@@ -669,16 +681,25 @@ async function handleScan(value, type) {
     const isReturn = document.getElementById("returnModeToggle")?.checked || false;
     const isAutoDetect = document.getElementById("autoDetectToggle")?.checked || false;
 
-    // Strict duplicate check against session history to prevent double-scanning
+    // Strict duplicate check against session history and batch queue
     let isLocalDuplicate = false;
     const historyList = document.querySelectorAll('.history-code');
     historyList.forEach(item => {
-      if (item.innerText === value) isLocalDuplicate = true;
+      if (item.innerText.trim() === value.trim()) isLocalDuplicate = true;
     });
+
+    if (!isLocalDuplicate && isBatchMode && Array.isArray(batchQueue)) {
+      if (batchQueue.some(item => item.code && item.code.trim() === value.trim())) {
+        isLocalDuplicate = true;
+      }
+    }
 
     if (isLocalDuplicate) {
       flash("duplicate");
-      Sound.duplicate();
+      if (window.Sound && window.Sound.duplicate) {
+        window.Sound.duplicate();
+      }
+      speakVoice("Already scanned! Duplicate.");
       updateStatus("⚠️ Duplicate – already scanned");
       setTimeout(resumeScanner, 1500);
       return;
@@ -802,7 +823,10 @@ async function executeScan(scanData, type) {
 
   if (data.duplicate) {
     flash("duplicate");
-    Sound.duplicate();
+    if (window.Sound && window.Sound.duplicate) {
+      window.Sound.duplicate();
+    }
+    speakVoice("Already scanned! Duplicate.");
     updateStatus("⚠️ Duplicate – already scanned");
   } else {
     successScanCount++;

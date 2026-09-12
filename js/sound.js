@@ -73,7 +73,8 @@ window.Sound = {
   },
 
   duplicate() {
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200]); // Dual pulse
+    if (navigator.vibrate) navigator.vibrate([200, 80, 200]); // Dual pulse
+    initSound();
     if (!audioCtx || audioCtx.state !== "running") return;
 
     const osc = audioCtx.createOscillator();
@@ -84,25 +85,17 @@ window.Sound = {
     gain.connect(audioCtx.destination);
 
     const now = audioCtx.currentTime;
-    const HIGH = 1600;
-    const LOW = 700;
-    const SWEEP_TIME = 0.4;
-    const CYCLES = 2; // Reduced cycles for better UX
-    const VOLUME = 0.25;
+    // Distinct double warning chirp: 950Hz -> 450Hz twice
+    osc.frequency.setValueAtTime(950, now);
+    osc.frequency.exponentialRampToValueAtTime(450, now + 0.12);
+    osc.frequency.setValueAtTime(950, now + 0.16);
+    osc.frequency.exponentialRampToValueAtTime(450, now + 0.28);
 
-    gain.gain.setValueAtTime(VOLUME, now);
-
-    let t = now;
-    for (let i = 0; i < CYCLES; i++) {
-      osc.frequency.setValueAtTime(HIGH, t);
-      osc.frequency.linearRampToValueAtTime(LOW, t + SWEEP_TIME);
-      t += SWEEP_TIME;
-    }
-
-    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
 
     osc.start(now);
-    osc.stop(t + 0.3);
+    osc.stop(now + 0.35);
   },
 
   error() {
