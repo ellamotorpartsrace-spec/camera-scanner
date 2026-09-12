@@ -380,7 +380,16 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
       <!-- Shared Options -->
       <div class="options-grid">
         <div class="form-group full-width">
-          <label for="courierSelect">📦 Courier</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label for="courierSelect" style="margin-bottom: 0;">📦 Courier</label>
+            <label class="switch-label" for="autoDetectToggle" style="font-size: 0.75rem; gap: 6px; cursor: pointer;">
+              <span id="autoDetectLabel" style="color: var(--accent-2); font-weight: 800; display: flex; align-items: center; gap: 4px;">⚡ Auto-Detect</span>
+              <div class="switch switch-mini">
+                <input type="checkbox" id="autoDetectToggle">
+                <span class="slider"></span>
+              </div>
+            </label>
+          </div>
           <select id="courierSelect">
             <option value="">-- Select Courier --</option>
             <option value="JNT Express">JNT Express</option>
@@ -506,6 +515,42 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
 
   <div id="flash"></div>
 
+  <!-- Mismatch Blocker Modal -->
+  <div id="mismatchModal" class="mismatch-modal-backdrop">
+    <div class="mismatch-card">
+      <div class="mismatch-icon">⚠️</div>
+      <div class="mismatch-title">Courier Mismatch!</div>
+      <p class="mismatch-subtitle" id="mismatchReason">The scanned package does not match your selected courier.</p>
+      
+      <div class="mismatch-details">
+        <div class="mismatch-row">
+          <span class="label">Scanned Code:</span>
+          <span class="val" id="mismatchCodeVal" style="font-family: monospace; font-size: 0.95rem;">-</span>
+        </div>
+        <div class="mismatch-row">
+          <span class="label">Detected As:</span>
+          <span class="val detected" id="mismatchDetectedVal">-</span>
+        </div>
+        <div class="mismatch-row">
+          <span class="label">Selected In App:</span>
+          <span class="val expected" id="mismatchSelectedVal">-</span>
+        </div>
+      </div>
+
+      <div class="mismatch-actions">
+        <button id="mismatchDiscardBtn" class="btn-mismatch-discard" type="button">
+          🛑 Discard &amp; Put Aside
+        </button>
+        <button id="mismatchSwitchBtn" class="btn-mismatch-switch" type="button">
+          🔀 Switch to <span id="mismatchSwitchTarget">-</span> &amp; Save
+        </button>
+        <button id="mismatchForceBtn" class="btn-mismatch-force" type="button">
+          ⚠️ Force Save Anyway
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     function unlockAudio() {
       // 1. Unlock Web Audio
@@ -521,8 +566,8 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     }
   </script>
 
-  <script src="js/sound.js"></script>
-  <script src="js/scanner-smart.js?v=30"></script>
+  <script src="js/sound.js?v=2"></script>
+  <script src="js/scanner-smart.js?v=35"></script>
 
 </body>
 

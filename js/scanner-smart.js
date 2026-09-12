@@ -35,6 +35,231 @@ const BD_FORMATS = [
   "qr_code", "code_128"
 ];
 
+/* ══════════════════════════════════════════
+   COURIER PATTERN DETECTION & VALIDATION
+══════════════════════════════════════════ */
+const CourierDetector = {
+  patterns: [
+    {
+      id: "shopee_spx",
+      courier: "Shopee Express",
+      platform: "Shopee",
+      regex: /^(SPX[A-Z0-9]*|PH[0-9A-Z]{8,})/i,
+      name: "Shopee Express",
+      badgeClass: "badge-shopee",
+      icon: "🟠"
+    },
+    {
+      id: "flash",
+      courier: "Flash Express",
+      platform: null,
+      regex: /^P(?![Hh])[0-9A-Z]{8,20}$/i,
+      name: "Flash Express",
+      badgeClass: "badge-flash",
+      icon: "⚡"
+    },
+    {
+      id: "lazada_jnt",
+      courier: "JNT Express",
+      platform: "Lazada",
+      regex: /^8[2-5]\d{10}$/,
+      name: "J&T Express (Lazada)",
+      badgeClass: "badge-jnt",
+      icon: "🔴"
+    },
+    {
+      id: "tiktok_jnt",
+      courier: "JNT Express",
+      platform: "TikTok",
+      regex: /^JT[0-9A-Z]{8,20}/i,
+      name: "J&T Express (TikTok)",
+      badgeClass: "badge-jnt",
+      icon: "🔴"
+    },
+    {
+      id: "lazada_lex",
+      courier: "Lazada Express",
+      platform: "Lazada",
+      regex: /^(LX|MP|NLPH)[0-9A-Z]+/i,
+      name: "Lazada Express (LEX)",
+      badgeClass: "badge-lex",
+      icon: "🔵"
+    },
+    {
+      id: "general_jnt",
+      courier: "JNT Express",
+      platform: null,
+      regex: /^[789]\d{11}$/,
+      name: "J&T Express",
+      badgeClass: "badge-jnt",
+      icon: "🔴"
+    }
+  ],
+
+  detect(code) {
+    if (!code) return null;
+    const clean = code.trim().toUpperCase();
+    for (const p of this.patterns) {
+      if (p.regex.test(clean)) {
+        return p;
+      }
+    }
+    return null;
+  },
+
+  validate(code, selectedCourier, selectedPlatform) {
+    if (!selectedCourier || selectedCourier === "Others") {
+      return { match: true }; // Allow unselected or Others
+    }
+
+    const detected = this.detect(code);
+    if (!detected) {
+      return { match: true, unknown: true }; // Unknown formats don't block
+    }
+
+    const courierMatches = (detected.courier.toLowerCase() === selectedCourier.toLowerCase());
+
+    let platformMatches = true;
+    if (selectedPlatform && detected.platform && detected.platform.toLowerCase() !== selectedPlatform.toLowerCase()) {
+      platformMatches = false;
+    }
+
+    return {
+      match: courierMatches && platformMatches,
+      detected,
+      courierMismatch: !courierMatches,
+      platformMismatch: !platformMatches
+    };
+  },
+
+  getBadge(courierName) {
+    const c = (courierName || "").toLowerCase();
+    if (c.includes("flash")) return { class: "badge-flash", icon: "⚡", label: "Flash" };
+    if (c.includes("jnt") || c.includes("j&t")) return { class: "badge-jnt", icon: "🔴", label: "J&T" };
+    if (c.includes("shopee")) return { class: "badge-shopee", icon: "🟠", label: "SPX" };
+    if (c.includes("lazada")) return { class: "badge-lex", icon: "🔵", label: "LEX" };
+    return { class: "badge-other", icon: "📦", label: courierName || "Courier" };
+  }
+};
+
+function speakMismatchAlert(text) {
+  if ('speechSynthesis' in window) {
+    try {
+      window.speechSynthesis.cancel();
+      const msg = new SpeechSynthesisUtterance(text);
+      msg.rate = 1.05;
+      msg.pitch = 1.0;
+      msg.lang = 'en-US';
+      window.speechSynthesis.speak(msg);
+    } catch(e) {
+      console.warn("Speech synthesis error", e);
+    }
+  }
+}
+
+function highlightField(el) {
+  if (!el) return;
+  el.style.transition = "all 0.3s";
+  el.style.borderColor = "#f59e0b";
+  el.style.boxShadow = "0 0 10px rgba(245, 158, 11, 0.5)";
+  setTimeout(() => {
+    el.style.borderColor = "";
+    el.style.boxShadow = "";
+  }, 1200);
+}
+
+let pendingMismatchScan = null;
+
+function showMismatchModal(mismatchData) {
+  pendingMismatchScan = mismatchData;
+  
+  const modal = document.getElementById("mismatchModal");
+  const codeEl = document.getElementById("mismatchCodeVal");
+  const detEl = document.getElementById("mismatchDetectedVal");
+  const selEl = document.getElementById("mismatchSelectedVal");
+  const reasonEl = document.getElementById("mismatchReason");
+  const switchTarget = document.getElementById("mismatchSwitchTarget");
+  const switchBtn = document.getElementById("mismatchSwitchBtn");
+
+  if (codeEl) codeEl.innerText = mismatchData.code;
+  if (detEl) detEl.innerText = mismatchData.detected?.name || mismatchData.detected?.courier || "Different Courier";
+  if (selEl) selEl.innerText = (mismatchData.selectedCourier || "None") + (mismatchData.selectedPlatform ? ` (${mismatchData.selectedPlatform})` : "");
+  if (reasonEl) reasonEl.innerText = mismatchData.reason;
+  
+  if (mismatchData.detected?.courier) {
+    if (switchTarget) switchTarget.innerText = mismatchData.detected.courier;
+    if (switchBtn) switchBtn.style.display = "block";
+  } else {
+    if (switchBtn) switchBtn.style.display = "none";
+  }
+
+  if (modal) modal.classList.add("active");
+}
+
+function hideMismatchModal() {
+  const modal = document.getElementById("mismatchModal");
+  if (modal) modal.classList.remove("active");
+  pendingMismatchScan = null;
+}
+
+function discardMismatchScan() {
+  hideMismatchModal();
+  lastValue = "";
+  updateStatus("Scan discarded. Put parcel aside.");
+  setTimeout(resumeScanner, 800);
+}
+
+function switchAndSaveMismatchScan() {
+  if (!pendingMismatchScan) return;
+  const p = pendingMismatchScan;
+  hideMismatchModal();
+
+  if (p.detected?.courier) {
+    const cSel = document.getElementById("courierSelect");
+    if (cSel) {
+      cSel.value = p.detected.courier;
+      highlightField(cSel);
+    }
+  }
+  if (p.detected?.platform) {
+    const pSel = document.getElementById("platformSelect");
+    if (pSel) {
+      pSel.value = p.detected.platform;
+      highlightField(pSel);
+    }
+  }
+
+  const updatedScanData = {
+    code: p.code,
+    type: p.type,
+    courier: p.detected?.courier || p.selectedCourier,
+    platform: p.detected?.platform || p.selectedPlatform,
+    parcel_size: p.parcelSize,
+    is_return: p.isReturn
+  };
+
+  updateStatus(`🔀 Switched to ${updatedScanData.courier}`);
+  executeScan(updatedScanData, p.type);
+}
+
+function forceSaveMismatchScan() {
+  if (!pendingMismatchScan) return;
+  const p = pendingMismatchScan;
+  hideMismatchModal();
+
+  const scanData = {
+    code: p.code,
+    type: p.type,
+    courier: p.selectedCourier,
+    platform: p.selectedPlatform,
+    parcel_size: p.parcelSize,
+    is_return: p.isReturn
+  };
+
+  updateStatus("⚠️ Force accepted scan");
+  executeScan(scanData, p.type);
+}
+
 /* ── STATE ── */
 let scanner = null;
 let isScanning = false;
@@ -94,6 +319,37 @@ window.addEventListener("load", () => {
       if (batchAction) batchAction.style.display = isBatchMode ? "block" : "none";
     });
   }
+
+  // Auto-Detect toggle
+  const autoToggle = document.getElementById("autoDetectToggle");
+  const autoLabel = document.getElementById("autoDetectLabel");
+  if (autoToggle) {
+    if (localStorage.getItem("smartAutoDetect") === "true") {
+      autoToggle.checked = true;
+    }
+    const updateAutoDetectUI = (active) => {
+      if (autoLabel) {
+        autoLabel.innerHTML = active 
+          ? '⚡ Auto-Detect <span style="font-size:0.6rem; background:#f59e0b; color:#000; padding:1px 5px; border-radius:10px; font-weight:900;">ON</span>' 
+          : '⚡ Auto-Detect';
+      }
+    };
+    updateAutoDetectUI(autoToggle.checked);
+    autoToggle.addEventListener("change", () => {
+      localStorage.setItem("smartAutoDetect", autoToggle.checked);
+      updateAutoDetectUI(autoToggle.checked);
+    });
+  }
+
+  // Mismatch modal button events
+  const discBtn = document.getElementById("mismatchDiscardBtn");
+  if (discBtn) discBtn.addEventListener("click", discardMismatchScan);
+
+  const swBtn = document.getElementById("mismatchSwitchBtn");
+  if (swBtn) swBtn.addEventListener("click", switchAndSaveMismatchScan);
+
+  const forceBtn = document.getElementById("mismatchForceBtn");
+  if (forceBtn) forceBtn.addEventListener("click", forceSaveMismatchScan);
 
   // Submit Batch Button
   const submitBtn = document.getElementById("submitBatchBtn");
@@ -407,15 +663,13 @@ async function handleScan(value, type) {
   updateStatus("Processing…");
 
   try {
-    const courier = document.getElementById("courierSelect")?.value || "";
-    const platform = document.getElementById("platformSelect")?.value || "";
+    let courier = document.getElementById("courierSelect")?.value || "";
+    let platform = document.getElementById("platformSelect")?.value || "";
     const parcelSize = document.getElementById("parcelSizeSelect")?.value || "POUCH";
     const isReturn = document.getElementById("returnModeToggle")?.checked || false;
-
-    const scanData = { code: value, type, courier, platform, parcel_size: parcelSize, is_return: isReturn };
+    const isAutoDetect = document.getElementById("autoDetectToggle")?.checked || false;
 
     // Strict duplicate check against session history to prevent double-scanning
-    // the same waybill if it has both a QR and a Barcode (or just rescanning)
     let isLocalDuplicate = false;
     const historyList = document.querySelectorAll('.history-code');
     historyList.forEach(item => {
@@ -430,80 +684,145 @@ async function handleScan(value, type) {
       return;
     }
 
-    if (isBatchMode) {
-      batchQueue.push(scanData);
-      saveQueues();
-      scanCount++;
-      updateCounterUI();
-      flash("success");
-      Sound.success();
-      updateStatus(`📦 Added to Batch (${batchQueue.length})`);
-      pushHistory(value, type, false, { timestamp: new Date().toISOString() });
-      setTimeout(resumeScanner, 1200); // Increased from 500ms to give time to move parcel away
-      return;
-    }
-
-    // Hostinger strips application/json bodies, so we MUST use FormData
-    let res;
-    let data;
-    const scanFd = new FormData();
-    scanFd.append("payload", JSON.stringify(scanData));
-    try {
-      res = await fetch(API_ENDPOINT, { method: "POST", body: scanFd });
-    } catch(fetchErr) {
-      // Network Error (Offline)
-      offlineQueue.push(scanData);
-      saveQueues();
-      scanCount++;
-      updateCounterUI();
-      flash("warning");
-      Sound.success();
-      updateStatus(`⚠️ Saved Offline (${offlineQueue.length} pending)`);
-      pushHistory(value, type, false, { timestamp: new Date().toISOString() });
-      handleOffline();
-      setTimeout(resumeScanner, 500);
-      return;
-    }
-
-    try { data = await res.json(); } catch(e) { throw new Error(`Server returned HTTP ${res.status} without JSON.`); }
-
-    if (!res.ok || data.status === "error") {
-      throw new Error(data.message || `HTTP ${res.status} Error`);
-    }
-
-
-    scanCount++;
-    updateCounterUI();
-
-    if (data.duplicate) {
-      flash("duplicate");
-      Sound.duplicate();
-      updateStatus("⚠️ Duplicate – already scanned");
+    // 1. AUTO-DETECT MODE
+    if (isAutoDetect) {
+      const detected = CourierDetector.detect(value);
+      if (detected) {
+        if (detected.courier) {
+          courier = detected.courier;
+          const cSel = document.getElementById("courierSelect");
+          if (cSel && cSel.value !== courier) {
+            cSel.value = courier;
+            highlightField(cSel);
+          }
+        }
+        if (detected.platform) {
+          platform = detected.platform;
+          const pSel = document.getElementById("platformSelect");
+          if (pSel && pSel.value !== platform) {
+            pSel.value = platform;
+            highlightField(pSel);
+          }
+        }
+      }
     } else {
-      successScanCount++;
-      if (parcelSize === "BULKY") bulkyCount++; else pouchCount++;
-      updateCounterUI();
+      // 2. STRICT VALIDATION MODE (Mismatch Blocker)
+      const valResult = CourierDetector.validate(value, courier, platform);
+      if (!valResult.match) {
+        // TRIGGER MISMATCH BLOCKER!
+        if (window.Sound && window.Sound.mismatch) {
+          window.Sound.mismatch();
+        } else if (window.Sound) {
+          window.Sound.error();
+        }
+        flash("error");
 
-      if (data.is_return) {
-        flash("warning");
-        Sound.success();
-        updateStatus(`🔄 Return Saved (${type})`);
-      } else {
-        flash("success");
-        Sound.success();
-        updateStatus(`✅ Saved (${type})`);
+        const detectedName = valResult.detected?.name || valResult.detected?.courier || "Different Courier";
+        const selectedLabel = (courier || "None") + (platform ? ` (${platform})` : "");
+        const reasonText = valResult.courierMismatch 
+          ? `Expected ${selectedLabel}, but scanned ${detectedName}!`
+          : `Platform mismatch! Expected ${platform}, but code belongs to ${valResult.detected?.platform}!`;
+
+        speakMismatchAlert(`Wrong courier! Scanned ${valResult.detected?.courier || "other parcel"}.`);
+        updateStatus("⚠️ Mismatch Detected!");
+
+        showMismatchModal({
+          code: value,
+          type,
+          detected: valResult.detected,
+          selectedCourier: courier,
+          selectedPlatform: platform,
+          parcelSize,
+          isReturn,
+          reason: reasonText
+        });
+        return; // Halt processing!
       }
     }
 
-    pushHistory(value, type, data.duplicate, data.data);
-    saveSession();
+    const scanData = { code: value, type, courier, platform, parcel_size: parcelSize, is_return: isReturn };
+    await executeScan(scanData, type);
+
   } catch (err) {
     console.error(err);
     alert("Database Error: " + err.message);
     flash("error");
-    Sound.error();
+    if (window.Sound) Sound.error();
     updateStatus("❌ Save failed");
+    resumeTimeoutTimer = setTimeout(resumeScanner, RESUME_DELAY);
   }
+}
+
+async function executeScan(scanData, type) {
+  const { code: value, courier, platform, parcel_size: parcelSize, is_return: isReturn } = scanData;
+
+  if (isBatchMode) {
+    batchQueue.push(scanData);
+    saveQueues();
+    scanCount++;
+    updateCounterUI();
+    flash("success");
+    Sound.success();
+    updateStatus(`📦 Added to Batch (${batchQueue.length})`);
+    pushHistory(value, type, false, { timestamp: new Date().toISOString(), courier, platform, parcel_size: parcelSize });
+    setTimeout(resumeScanner, 1200);
+    return;
+  }
+
+  // Hostinger strips application/json bodies, so we MUST use FormData
+  let res;
+  let data;
+  const scanFd = new FormData();
+  scanFd.append("payload", JSON.stringify(scanData));
+  try {
+    res = await fetch(API_ENDPOINT, { method: "POST", body: scanFd });
+  } catch(fetchErr) {
+    // Network Error (Offline)
+    offlineQueue.push(scanData);
+    saveQueues();
+    scanCount++;
+    updateCounterUI();
+    flash("warning");
+    Sound.success();
+    updateStatus(`⚠️ Saved Offline (${offlineQueue.length} pending)`);
+    pushHistory(value, type, false, { timestamp: new Date().toISOString(), courier, platform, parcel_size: parcelSize });
+    handleOffline();
+    setTimeout(resumeScanner, 500);
+    return;
+  }
+
+  try { data = await res.json(); } catch(e) { throw new Error(`Server returned HTTP ${res.status} without JSON.`); }
+
+  if (!res.ok || data.status === "error") {
+    throw new Error(data.message || `HTTP ${res.status} Error`);
+  }
+
+  scanCount++;
+  updateCounterUI();
+
+  if (data.duplicate) {
+    flash("duplicate");
+    Sound.duplicate();
+    updateStatus("⚠️ Duplicate – already scanned");
+  } else {
+    successScanCount++;
+    if (parcelSize === "BULKY") bulkyCount++; else pouchCount++;
+    updateCounterUI();
+
+    if (data.is_return) {
+      flash("warning");
+      Sound.success();
+      updateStatus(`🔄 Return Saved (${type})`);
+    } else {
+      flash("success");
+      Sound.success();
+      updateStatus(`✅ Saved (${type})`);
+    }
+  }
+
+  const histData = Object.assign({}, data.data || {}, { courier, platform, parcel_size: parcelSize });
+  pushHistory(value, type, data.duplicate, histData);
+  saveSession();
 
   resumeTimeoutTimer = setTimeout(resumeScanner, RESUME_DELAY);
 }
@@ -652,14 +971,21 @@ function renderHistoryDOM(value, type, duplicate = false, data = {}) {
   const li = document.createElement("li");
   li.className = `history-item ${duplicate ? "duplicate" : "new"}`;
   li.style.borderLeftColor = borderCol;
+
+  const cBadge = CourierDetector.getBadge(data?.courier);
+  const courierPill = data?.courier ? `
+    <span class="courier-chip ${cBadge.class}">${cBadge.icon} ${data.courier}</span>
+  ` : '';
+
   li.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:8px;">
+    <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
       <div class="history-code" style="font-size:1.1rem;font-weight:800;letter-spacing:0.5px;color:var(--text);word-break:break-all;line-height:1.2;">
         ${value}
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
-        <div style="display:flex;gap:6px;align-items:center;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
           <span class="type-chip ${chipClass}">${chipLabel}</span>
+          ${courierPill}
           <span class="history-badge ${duplicate ? 'dup' : 'new'}" style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(0,0,0,0.05);">
             ${returnedAt ? "RETURNED" : duplicate ? `${scanCt + 1}× DUP` : "NEW"}
           </span>

@@ -125,6 +125,31 @@ window.Sound = {
     osc.start(now);
     osc.stop(now + 0.4);
   },
+
+  mismatch() {
+    if (navigator.vibrate) navigator.vibrate([250, 100, 250, 100, 350]); // Strong urgent pulses
+    if (!audioCtx || audioCtx.state !== "running") return;
+
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "sawtooth";
+    // 2-tone alternating emergency siren: 880Hz -> 440Hz -> 880Hz -> 440Hz
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.setValueAtTime(440, now + 0.12);
+    osc.frequency.setValueAtTime(880, now + 0.24);
+    osc.frequency.setValueAtTime(440, now + 0.36);
+
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.55);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.55);
+  },
 };
 
 /* =========================
