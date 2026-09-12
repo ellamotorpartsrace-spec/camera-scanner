@@ -626,11 +626,10 @@ async function handleScan(value, type) {
         }
         flash("error");
 
-        const detectedName = valResult.detected?.name || valResult.detected?.courier || "Different Courier";
-        const selectedLabel = (courier || "None");
+        const detectedCourier = valResult.detected?.courier || "Wrong Courier";
 
-        speakVoice(`Not match! Scanned ${valResult.detected?.courier || "other parcel"}.`);
-        updateStatus(`❌ <strong>NOT MATCH!</strong> Scanned ${detectedName} (Expected ${selectedLabel})`, "error");
+        speakVoice(`Not match! Scanned ${detectedCourier}.`);
+        updateStatus(`❌ Not Match – Scanned ${detectedCourier}`, "error");
 
         clearTimeout(resumeTimeoutTimer);
         resumeTimeoutTimer = setTimeout(resumeScanner, 1800);

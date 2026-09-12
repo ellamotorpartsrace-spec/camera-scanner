@@ -254,6 +254,9 @@ button:disabled {
     font-size: 0.85rem;
     border: 1px solid var(--border);
     transition: all 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 
@@ -457,34 +460,22 @@ html.dark-mode .history li {
    STATUS PILL ALERTS
 ========================= */
 #status-pill.status-error {
-    background: rgba(239, 68, 68, 0.18) !important;
+    background: rgba(239, 68, 68, 0.1) !important;
     color: #ef4444 !important;
-    border: 2px solid #ef4444 !important;
-    font-weight: 900 !important;
-    font-size: 0.95rem !important;
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4) !important;
-    animation: status-shake 0.35s ease-in-out;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
+    box-shadow: none !important;
 }
 
 #status-pill.status-warning {
-    background: rgba(245, 158, 11, 0.18) !important;
+    background: rgba(245, 158, 11, 0.1) !important;
     color: #f59e0b !important;
-    border: 2px solid #f59e0b !important;
-    font-weight: 900 !important;
-    font-size: 0.95rem !important;
-    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3) !important;
-    animation: status-shake 0.35s ease-in-out;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    box-shadow: none !important;
 }
 
 #status-pill.status-success {
-    background: rgba(34, 197, 94, 0.15) !important;
+    background: rgba(34, 197, 94, 0.1) !important;
     color: #16a34a !important;
-    border: 1px solid rgba(34, 197, 94, 0.4) !important;
-    font-weight: 800 !important;
-}
-
-@keyframes status-shake {
-    0%, 100% { transform: translateX(0); }
-    20%, 60% { transform: translateX(-6px); }
-    40%, 80% { transform: translateX(6px); }
+    border: 1px solid rgba(34, 197, 94, 0.35) !important;
+    box-shadow: none !important;
 }

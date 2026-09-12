@@ -23,13 +23,13 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     document.documentElement.classList.add(t === 'light' ? 'light-mode' : 'dark-mode');
   </script>
   <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
-  <link rel="stylesheet" href="css/scanner.css?v=39" />
+  <link rel="stylesheet" href="css/scanner.css?v=41" />
 
-  <!-- Force SW & Cache Reset v14: clears any stuck old service workers -->
+  <!-- Force SW & Cache Reset v15: clears any stuck old service workers -->
   <script>
     (function() {
-      var SW_EXPECTED = 'ella-scanner-v14';
-      var RESET_KEY   = 'sw_reset_done_v14';
+      var SW_EXPECTED = 'ella-scanner-v15';
+      var RESET_KEY   = 'sw_reset_done_v15';
       if (localStorage.getItem(RESET_KEY)) return; // already reset this session
 
       if ('serviceWorker' in navigator) {
@@ -323,56 +323,37 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
       background: rgba(239, 68, 68, 0.15);
     }
 
-    /* ── Direct In-Flow Status Alerts (No Popups!) ── */
+    /* ── Status Alerts (Matches Default Pill Size & Alignment Exactly) ── */
     #status-pill {
       margin: 12px 0;
-      padding: 12px 16px;
+      padding: 10px 16px;
       text-align: center;
       border-radius: 12px;
       font-weight: 700;
-      background: rgba(0, 0, 0, 0.05);
-      color: var(--muted);
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       border: 1px solid var(--border);
       transition: all 0.25s ease;
-      min-height: 46px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     #status-pill.status-error {
-      background: rgba(239, 68, 68, 0.18) !important;
+      background: rgba(239, 68, 68, 0.1) !important;
       color: #ef4444 !important;
-      border: 2px solid #ef4444 !important;
-      font-weight: 900 !important;
-      font-size: 0.95rem !important;
-      box-shadow: 0 0 20px rgba(239, 68, 68, 0.4) !important;
-      animation: status-shake 0.35s ease-in-out;
+      border-color: rgba(239, 68, 68, 0.35) !important;
     }
 
     #status-pill.status-warning {
-      background: rgba(245, 158, 11, 0.18) !important;
+      background: rgba(245, 158, 11, 0.1) !important;
       color: #f59e0b !important;
-      border: 2px solid #f59e0b !important;
-      font-weight: 900 !important;
-      font-size: 0.95rem !important;
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.3) !important;
-      animation: status-shake 0.35s ease-in-out;
+      border-color: rgba(245, 158, 11, 0.35) !important;
     }
 
     #status-pill.status-success {
-      background: rgba(34, 197, 94, 0.15) !important;
+      background: rgba(34, 197, 94, 0.1) !important;
       color: #16a34a !important;
-      border: 1px solid rgba(34, 197, 94, 0.4) !important;
-      font-weight: 800 !important;
-    }
-
-    @keyframes status-shake {
-      0%, 100% { transform: translateX(0); }
-      20%, 60% { transform: translateX(-6px); }
-      40%, 80% { transform: translateX(6px); }
+      border-color: rgba(34, 197, 94, 0.35) !important;
     }
   </style>
 </head>
@@ -582,8 +563,8 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     }
   </script>
 
-  <script src="js/sound.js?v=39"></script>
-  <script src="js/scanner-smart.js?v=39"></script>
+  <script src="js/sound.js?v=41"></script>
+  <script src="js/scanner-smart.js?v=41"></script>
 
 </body>
 
