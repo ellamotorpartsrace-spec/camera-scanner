@@ -23,13 +23,13 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     document.documentElement.classList.add(t === 'light' ? 'light-mode' : 'dark-mode');
   </script>
   <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
-  <link rel="stylesheet" href="css/scanner.css?v=37" />
+  <link rel="stylesheet" href="css/scanner.css?v=39" />
 
-  <!-- Force SW & Cache Reset v13: clears any stuck old service workers -->
+  <!-- Force SW & Cache Reset v14: clears any stuck old service workers -->
   <script>
     (function() {
-      var SW_EXPECTED = 'ella-scanner-v13';
-      var RESET_KEY   = 'sw_reset_done_v13';
+      var SW_EXPECTED = 'ella-scanner-v14';
+      var RESET_KEY   = 'sw_reset_done_v14';
       if (localStorage.getItem(RESET_KEY)) return; // already reset this session
 
       if ('serviceWorker' in navigator) {
@@ -323,160 +323,56 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
       background: rgba(239, 68, 68, 0.15);
     }
 
-    /* ── Embedded Mismatch Blocker Modal Styles (Immune to CSS Caching) ── */
-    .mismatch-modal-backdrop {
-      position: fixed !important;
-      inset: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      background: rgba(2, 6, 23, 0.92) !important;
-      backdrop-filter: blur(8px) !important;
-      -webkit-backdrop-filter: blur(8px) !important;
-      z-index: 10000 !important;
-      display: none;
+    /* ── Direct In-Flow Status Alerts (No Popups!) ── */
+    #status-pill {
+      margin: 12px 0;
+      padding: 12px 16px;
+      text-align: center;
+      border-radius: 12px;
+      font-weight: 700;
+      background: rgba(0, 0, 0, 0.05);
+      color: var(--muted);
+      font-size: 0.9rem;
+      border: 1px solid var(--border);
+      transition: all 0.25s ease;
+      min-height: 46px;
+      display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
-      box-sizing: border-box;
+      line-height: 1.3;
     }
 
-    .mismatch-modal-backdrop.active {
-      display: flex !important;
-    }
-
-    .mismatch-card {
-      width: 100%;
-      max-width: 380px;
-      background: var(--card, #10141e);
+    #status-pill.status-error {
+      background: rgba(239, 68, 68, 0.18) !important;
+      color: #ef4444 !important;
       border: 2px solid #ef4444 !important;
-      border-radius: 20px;
-      padding: 1.5rem;
-      box-shadow: 0 15px 40px rgba(239, 68, 68, 0.4) !important;
-      text-align: center;
-      box-sizing: border-box;
-      animation: modal-pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      font-weight: 900 !important;
+      font-size: 0.95rem !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.4) !important;
+      animation: status-shake 0.35s ease-in-out;
     }
 
-    @keyframes modal-pop {
-      from { transform: scale(0.92); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+    #status-pill.status-warning {
+      background: rgba(245, 158, 11, 0.18) !important;
+      color: #f59e0b !important;
+      border: 2px solid #f59e0b !important;
+      font-weight: 900 !important;
+      font-size: 0.95rem !important;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.3) !important;
+      animation: status-shake 0.35s ease-in-out;
     }
 
-    .mismatch-icon {
-      font-size: 3rem;
-      line-height: 1;
-      margin-bottom: 8px;
+    #status-pill.status-success {
+      background: rgba(34, 197, 94, 0.15) !important;
+      color: #16a34a !important;
+      border: 1px solid rgba(34, 197, 94, 0.4) !important;
+      font-weight: 800 !important;
     }
 
-    .mismatch-title {
-      font-size: 1.25rem;
-      font-weight: 900;
-      color: #ef4444;
-      margin-bottom: 4px;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-
-    .mismatch-subtitle {
-      font-size: 0.82rem;
-      color: var(--muted, #94a3b8);
-      margin-bottom: 1rem;
-      line-height: 1.4;
-    }
-
-    .mismatch-details {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 1.25rem;
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      border: 1px solid var(--border, rgba(239, 68, 68, 0.2));
-    }
-
-    html.light-mode .mismatch-details {
-      background: rgba(0, 0, 0, 0.04);
-    }
-
-    .mismatch-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.85rem;
-    }
-
-    .mismatch-row .label {
-      color: var(--muted, #94a3b8);
-      font-weight: 600;
-    }
-
-    .mismatch-row .val {
-      font-weight: 800;
-      color: var(--text, #e2e8f0);
-    }
-
-    .mismatch-row .val.expected {
-      color: #3b82f6;
-    }
-
-    .mismatch-row .val.detected {
-      color: #ef4444;
-    }
-
-    .mismatch-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .btn-mismatch-discard {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 800;
-      background: #ef4444;
-      color: white;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-      transition: transform 0.15s ease;
-    }
-
-    .btn-mismatch-discard:active {
-      transform: scale(0.97);
-    }
-
-    .btn-mismatch-switch {
-      width: 100%;
-      padding: 12px;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      font-weight: 800;
-      background: #3b82f6;
-      color: white;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-      transition: transform 0.15s ease;
-    }
-
-    .btn-mismatch-switch:active {
-      transform: scale(0.97);
-    }
-
-    .btn-mismatch-force {
-      width: 100%;
-      padding: 10px;
-      border-radius: 10px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      background: transparent;
-      color: var(--muted, #94a3b8);
-      border: 1px solid var(--border, rgba(255,255,255,0.1));
-      cursor: pointer;
+    @keyframes status-shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
     }
   </style>
 </head>
@@ -671,42 +567,6 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
 
   <div id="flash"></div>
 
-  <!-- Mismatch Blocker Modal -->
-  <div id="mismatchModal" class="mismatch-modal-backdrop" style="display: none;">
-    <div class="mismatch-card">
-      <div class="mismatch-icon">⚠️</div>
-      <div class="mismatch-title">Courier Mismatch!</div>
-      <p class="mismatch-subtitle" id="mismatchReason">The scanned package does not match your selected courier.</p>
-      
-      <div class="mismatch-details">
-        <div class="mismatch-row">
-          <span class="label">Scanned Code:</span>
-          <span class="val" id="mismatchCodeVal" style="font-family: monospace; font-size: 0.95rem;">-</span>
-        </div>
-        <div class="mismatch-row">
-          <span class="label">Detected As:</span>
-          <span class="val detected" id="mismatchDetectedVal">-</span>
-        </div>
-        <div class="mismatch-row">
-          <span class="label">Selected In App:</span>
-          <span class="val expected" id="mismatchSelectedVal">-</span>
-        </div>
-      </div>
-
-      <div class="mismatch-actions">
-        <button id="mismatchDiscardBtn" class="btn-mismatch-discard" type="button">
-          🛑 Discard &amp; Put Aside
-        </button>
-        <button id="mismatchSwitchBtn" class="btn-mismatch-switch" type="button">
-          🔀 Switch to <span id="mismatchSwitchTarget">-</span> &amp; Save
-        </button>
-        <button id="mismatchForceBtn" class="btn-mismatch-force" type="button">
-          ⚠️ Force Save Anyway
-        </button>
-      </div>
-    </div>
-  </div>
-
   <script>
     function unlockAudio() {
       // 1. Unlock Web Audio
@@ -722,8 +582,8 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     }
   </script>
 
-  <script src="js/sound.js?v=38"></script>
-  <script src="js/scanner-smart.js?v=38"></script>
+  <script src="js/sound.js?v=39"></script>
+  <script src="js/scanner-smart.js?v=39"></script>
 
 </body>
 

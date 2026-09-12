@@ -173,104 +173,6 @@ function highlightField(el) {
   }, 1200);
 }
 
-let pendingMismatchScan = null;
-
-function showMismatchModal(mismatchData) {
-  pendingMismatchScan = mismatchData;
-  
-  const modal = document.getElementById("mismatchModal");
-  const codeEl = document.getElementById("mismatchCodeVal");
-  const detEl = document.getElementById("mismatchDetectedVal");
-  const selEl = document.getElementById("mismatchSelectedVal");
-  const reasonEl = document.getElementById("mismatchReason");
-  const switchTarget = document.getElementById("mismatchSwitchTarget");
-  const switchBtn = document.getElementById("mismatchSwitchBtn");
-
-  if (codeEl) codeEl.innerText = mismatchData.code;
-  if (detEl) detEl.innerText = mismatchData.detected?.name || mismatchData.detected?.courier || "Different Courier";
-  if (selEl) selEl.innerText = (mismatchData.selectedCourier || "None") + (mismatchData.selectedPlatform ? ` (${mismatchData.selectedPlatform})` : "");
-  if (reasonEl) reasonEl.innerText = mismatchData.reason;
-  
-  if (mismatchData.detected?.courier) {
-    if (switchTarget) switchTarget.innerText = mismatchData.detected.courier;
-    if (switchBtn) switchBtn.style.display = "block";
-  } else {
-    if (switchBtn) switchBtn.style.display = "none";
-  }
-
-  if (modal) {
-    modal.style.display = "flex";
-    modal.classList.add("active");
-  }
-}
-
-function hideMismatchModal() {
-  const modal = document.getElementById("mismatchModal");
-  if (modal) {
-    modal.style.display = "none";
-    modal.classList.remove("active");
-  }
-  pendingMismatchScan = null;
-}
-
-function discardMismatchScan() {
-  hideMismatchModal();
-  lastValue = "";
-  updateStatus("Scan discarded. Put parcel aside.");
-  setTimeout(resumeScanner, 800);
-}
-
-function switchAndSaveMismatchScan() {
-  if (!pendingMismatchScan) return;
-  const p = pendingMismatchScan;
-  hideMismatchModal();
-
-  if (p.detected?.courier) {
-    const cSel = document.getElementById("courierSelect");
-    if (cSel) {
-      cSel.value = p.detected.courier;
-      highlightField(cSel);
-    }
-  }
-  if (p.detected?.platform) {
-    const pSel = document.getElementById("platformSelect");
-    if (pSel) {
-      pSel.value = p.detected.platform;
-      highlightField(pSel);
-    }
-  }
-
-  const updatedScanData = {
-    code: p.code,
-    type: p.type,
-    courier: p.detected?.courier || p.selectedCourier,
-    platform: p.detected?.platform || p.selectedPlatform,
-    parcel_size: p.parcelSize,
-    is_return: p.isReturn
-  };
-
-  updateStatus(`🔀 Switched to ${updatedScanData.courier}`);
-  executeScan(updatedScanData, p.type);
-}
-
-function forceSaveMismatchScan() {
-  if (!pendingMismatchScan) return;
-  const p = pendingMismatchScan;
-  hideMismatchModal();
-
-  const scanData = {
-    code: p.code,
-    type: p.type,
-    courier: p.selectedCourier,
-    platform: p.selectedPlatform,
-    parcel_size: p.parcelSize,
-    is_return: p.isReturn
-  };
-
-  updateStatus("⚠️ Force accepted scan");
-  executeScan(scanData, p.type);
-}
-
 /* ── STATE ── */
 let scanner = null;
 let isScanning = false;
@@ -294,12 +196,9 @@ let bulkyCount = 0;
    INIT
 ══════════════════════════════════════════ */
 window.addEventListener("load", () => {
-  hideMismatchModal();
   loadSession();
   loadQueues();
   restoreCounterUI();
-  // We no longer call initScanner here — it's called by unlockAudio() 
-  // on a user gesture to satisfy mobile browser security.
   updateStatus("Waiting for user gesture…");
 
   // Return mode toggle
@@ -352,16 +251,6 @@ window.addEventListener("load", () => {
       updateAutoDetectUI(autoToggle.checked);
     });
   }
-
-  // Mismatch modal button events
-  const discBtn = document.getElementById("mismatchDiscardBtn");
-  if (discBtn) discBtn.addEventListener("click", discardMismatchScan);
-
-  const swBtn = document.getElementById("mismatchSwitchBtn");
-  if (swBtn) swBtn.addEventListener("click", switchAndSaveMismatchScan);
-
-  const forceBtn = document.getElementById("mismatchForceBtn");
-  if (forceBtn) forceBtn.addEventListener("click", forceSaveMismatchScan);
 
   // Submit Batch Button
   const submitBtn = document.getElementById("submitBatchBtn");
@@ -727,10 +616,9 @@ async function handleScan(value, type) {
         }
       }
     } else {
-      // 2. STRICT VALIDATION MODE (Mismatch Blocker)
+      // 2. STRICT VALIDATION MODE (Direct In-Flow Error - Zero Interruption!)
       const valResult = CourierDetector.validate(value, courier, platform);
       if (!valResult.match) {
-        // TRIGGER MISMATCH BLOCKER!
         if (window.Sound && window.Sound.mismatch) {
           window.Sound.mismatch();
         } else if (window.Sound) {
@@ -739,25 +627,14 @@ async function handleScan(value, type) {
         flash("error");
 
         const detectedName = valResult.detected?.name || valResult.detected?.courier || "Different Courier";
-        const selectedLabel = (courier || "None") + (platform ? ` (${platform})` : "");
-        const reasonText = valResult.courierMismatch 
-          ? `Expected ${selectedLabel}, but scanned ${detectedName}!`
-          : `Platform mismatch! Expected ${platform}, but code belongs to ${valResult.detected?.platform}!`;
+        const selectedLabel = (courier || "None");
 
-        speakMismatchAlert(`Wrong courier! Scanned ${valResult.detected?.courier || "other parcel"}.`);
-        updateStatus("⚠️ Mismatch Detected!");
+        speakVoice(`Not match! Scanned ${valResult.detected?.courier || "other parcel"}.`);
+        updateStatus(`❌ <strong>NOT MATCH!</strong> Scanned ${detectedName} (Expected ${selectedLabel})`, "error");
 
-        showMismatchModal({
-          code: value,
-          type,
-          detected: valResult.detected,
-          selectedCourier: courier,
-          selectedPlatform: platform,
-          parcelSize,
-          isReturn,
-          reason: reasonText
-        });
-        return; // Halt processing!
+        clearTimeout(resumeTimeoutTimer);
+        resumeTimeoutTimer = setTimeout(resumeScanner, 1800);
+        return; // Halt processing! Do not save or batch.
       }
     }
 
@@ -853,7 +730,7 @@ async function executeScan(scanData, type) {
 
 function resumeScanner() {
   if (!isScanning) {
-    updateStatus("Camera ready. Tap SCAN to begin.");
+    updateStatus("Camera ready. Tap SCAN to begin.", "normal");
   }
 }
 
@@ -879,9 +756,11 @@ function updateBadge(mode) {
   }
 }
 
-function updateStatus(text) {
+function updateStatus(text, type = "normal") {
   const el = document.getElementById("status-pill");
-  if (el) el.innerText = text;
+  if (!el) return;
+  el.innerHTML = text;
+  el.className = type === "error" ? "status-error" : (type === "warning" || type === "duplicate") ? "status-warning" : type === "success" ? "status-success" : "";
 }
 
 function flash(type) {

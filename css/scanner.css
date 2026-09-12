@@ -454,165 +454,37 @@ html.dark-mode .history li {
 }
 
 /* =========================
-   MISMATCH BLOCKER MODAL
+   STATUS PILL ALERTS
 ========================= */
-.mismatch-modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(2, 6, 23, 0.88);
-    backdrop-filter: blur(8px);
-    z-index: 10000;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    animation: modal-fade-in 0.2s ease-out forwards;
+#status-pill.status-error {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #ef4444 !important;
+    border: 2px solid #ef4444 !important;
+    font-weight: 900 !important;
+    font-size: 0.95rem !important;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4) !important;
+    animation: status-shake 0.35s ease-in-out;
 }
 
-.mismatch-modal-backdrop.active {
-    display: flex;
+#status-pill.status-warning {
+    background: rgba(245, 158, 11, 0.18) !important;
+    color: #f59e0b !important;
+    border: 2px solid #f59e0b !important;
+    font-weight: 900 !important;
+    font-size: 0.95rem !important;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3) !important;
+    animation: status-shake 0.35s ease-in-out;
 }
 
-@keyframes modal-fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+#status-pill.status-success {
+    background: rgba(34, 197, 94, 0.15) !important;
+    color: #16a34a !important;
+    border: 1px solid rgba(34, 197, 94, 0.4) !important;
+    font-weight: 800 !important;
 }
 
-.mismatch-card {
-    width: 100%;
-    max-width: 400px;
-    background: var(--card);
-    border: 2px solid #ef4444;
-    border-radius: 20px;
-    padding: 1.5rem;
-    box-shadow: 0 15px 40px rgba(239, 68, 68, 0.35);
-    text-align: center;
-    animation: modal-pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-@keyframes modal-pop {
-    from { transform: scale(0.92); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-.mismatch-icon {
-    font-size: 3rem;
-    line-height: 1;
-    margin-bottom: 8px;
-    animation: shake-head 0.5s ease-in-out;
-}
-
-@keyframes shake-head {
+@keyframes status-shake {
     0%, 100% { transform: translateX(0); }
     20%, 60% { transform: translateX(-6px); }
     40%, 80% { transform: translateX(6px); }
-}
-
-.mismatch-title {
-    font-size: 1.25rem;
-    font-weight: 900;
-    color: #ef4444;
-    margin-bottom: 4px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.mismatch-subtitle {
-    font-size: 0.82rem;
-    color: var(--muted);
-    margin-bottom: 1rem;
-}
-
-.mismatch-details {
-    background: rgba(0, 0, 0, 0.04);
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 1.25rem;
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    border: 1px solid var(--border);
-}
-
-html.dark-mode .mismatch-details {
-    background: rgba(255, 255, 255, 0.03);
-}
-
-.mismatch-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.85rem;
-}
-
-.mismatch-row .label {
-    color: var(--muted);
-    font-weight: 600;
-}
-
-.mismatch-row .val {
-    font-weight: 800;
-    color: var(--text);
-}
-
-.mismatch-row .val.expected {
-    color: #3b82f6;
-}
-
-.mismatch-row .val.detected {
-    color: #ef4444;
-}
-
-.mismatch-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.btn-mismatch-discard {
-    width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    font-size: 1rem;
-    font-weight: 800;
-    background: #ef4444;
-    color: white;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-    transition: transform 0.15s ease;
-}
-
-.btn-mismatch-discard:active {
-    transform: scale(0.97);
-}
-
-.btn-mismatch-switch {
-    width: 100%;
-    padding: 12px;
-    border-radius: 12px;
-    font-size: 0.95rem;
-    font-weight: 800;
-    background: #3b82f6;
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.15s ease;
-}
-
-.btn-mismatch-switch:active {
-    transform: scale(0.97);
-}
-
-.btn-mismatch-force {
-    width: 100%;
-    padding: 10px;
-    border-radius: 10px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    cursor: pointer;
 }
