@@ -79,6 +79,7 @@ $config = require __DIR__ . '/api/core/config.php';
             <option value="">All Sizes</option>
             <option value="POUCH">Pouch</option>
             <option value="BULKY">Bulky</option>
+            <option value="CARGO">Cargo</option>
         </select>
         <select id="platformFilter">
             <option value="">All Platforms</option>
@@ -163,6 +164,10 @@ $config = require __DIR__ . '/api/core/config.php';
                     <div id="smTotalBulky" style="font-size:2rem; font-weight:900; color:#a78bfa; line-height:1;">0</div>
                     <div style="font-size:0.75rem; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:8px;">Bulky</div>
                 </div>
+                <div style="grid-column: span 2; background:var(--card, #fff); padding:16px 12px; border-radius:12px; border-bottom: 4px solid #eab308; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align:center;">
+                    <div id="smTotalCargo" style="font-size:2rem; font-weight:900; color:#eab308; line-height:1;">0</div>
+                    <div style="font-size:0.75rem; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:8px;">Cargo</div>
+                </div>
             </div>
 
             <div class="table-wrap" style="border: none; max-height: unset; overflow-x: auto; overflow-y: hidden; border-radius: 8px; background: var(--card, #fff); box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
@@ -174,6 +179,7 @@ $config = require __DIR__ . '/api/core/config.php';
                             <th style="padding: 12px 8px; font-size: 0.75rem; text-align: center; text-transform: uppercase;">Scans</th>
                             <th style="padding: 12px 8px; font-size: 0.75rem; text-align: center; text-transform: uppercase;">Pouches</th>
                             <th style="padding: 12px 8px; font-size: 0.75rem; text-align: center; text-transform: uppercase;">Bulky</th>
+                            <th style="padding: 12px 8px; font-size: 0.75rem; text-align: center; text-transform: uppercase;">Cargo</th>
                         </tr>
                     </thead>
                     <tbody id="summaryTableBody">
@@ -427,7 +433,7 @@ $config = require __DIR__ . '/api/core/config.php';
                 <td>${typeBadge}</td>
                 <td><span class="courier-badge">${r.courier || "-"}</span></td>
                 <td>
-                    <span class="badge" style="background:${r.parcel_size === 'BULKY' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(59, 130, 246, 0.15)'};color:${r.parcel_size === 'BULKY' ? '#a78bfa' : '#3b82f6'}">
+                    <span class="badge" style="background:${r.parcel_size === 'BULKY' ? 'rgba(139, 92, 246, 0.15)' : r.parcel_size === 'CARGO' ? 'rgba(234, 179, 8, 0.15)' : 'rgba(59, 130, 246, 0.15)'};color:${r.parcel_size === 'BULKY' ? '#a78bfa' : r.parcel_size === 'CARGO' ? '#eab308' : '#3b82f6'}">
                         ${r.parcel_size || "POUCH"}
                     </span>
                 </td>
@@ -673,12 +679,13 @@ $config = require __DIR__ . '/api/core/config.php';
         }
 
         function recalcSummaryTotals() {
-            let tScans = 0, tPouch = 0, tBulky = 0;
+            let tScans = 0, tPouch = 0, tBulky = 0, tCargo = 0;
             const checkboxes = document.querySelectorAll('.sm-row-checkbox:checked');
             checkboxes.forEach(cb => {
                 tScans += parseInt(cb.getAttribute('data-scans') || 0);
                 tPouch += parseInt(cb.getAttribute('data-pouch') || 0);
                 tBulky += parseInt(cb.getAttribute('data-bulky') || 0);
+                tCargo += parseInt(cb.getAttribute('data-cargo') || 0);
             });
             
             // Sync master checkbox
@@ -691,6 +698,7 @@ $config = require __DIR__ . '/api/core/config.php';
             document.getElementById("smTotalScans").innerText = tScans;
             document.getElementById("smTotalPouch").innerText = tPouch;
             document.getElementById("smTotalBulky").innerText = tBulky;
+            document.getElementById("smTotalCargo").innerText = tCargo;
         }
 
         async function openSummaryReport() {
@@ -741,7 +749,7 @@ $config = require __DIR__ . '/api/core/config.php';
                     let totalBulky = 0;
 
                     if (batches.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--muted)">No batches found for this date range.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--muted)">No batches found for this date range.</td></tr>`;
                     } else {
                         tbody.innerHTML = batches.map(b => {
                             let badgeHtml = '';
@@ -754,12 +762,13 @@ $config = require __DIR__ . '/api/core/config.php';
                             return `
                             <tr style="border-bottom: 1px solid var(--border);">
                                 <td style="padding: 12px 16px; text-align:center;">
-                                    <input type="checkbox" class="sm-row-checkbox" checked data-scans="${b.count}" data-pouch="${b.pouch_count || 0}" data-bulky="${b.bulky_count || 0}" onclick="recalcSummaryTotals()">
+                                    <input type="checkbox" class="sm-row-checkbox" checked data-scans="${b.count}" data-pouch="${b.pouch_count || 0}" data-bulky="${b.bulky_count || 0}" data-cargo="${b.cargo_count || 0}" onclick="recalcSummaryTotals()">
                                 </td>
                                 <td style="padding: 12px 16px;">${badgeHtml}</td>
                                 <td style="text-align: center; padding: 12px 8px;"><span class="badge" style="background:rgba(34, 197, 94, 0.15); color:#22c55e; font-weight:800;">${b.count}</span></td>
                                 <td style="text-align: center; padding: 12px 8px;"><span class="badge" style="background:rgba(59, 130, 246, 0.15); color:#3b82f6; font-weight:800;">${b.pouch_count || 0}</span></td>
                                 <td style="text-align: center; padding: 12px 8px;"><span class="badge" style="background:rgba(139, 92, 246, 0.15); color:#a78bfa; font-weight:800;">${b.bulky_count || 0}</span></td>
+                                <td style="text-align: center; padding: 12px 8px;"><span class="badge" style="background:rgba(234, 179, 8, 0.15); color:#eab308; font-weight:800;">${b.cargo_count || 0}</span></td>
                             </tr>
                             `;
                         }).join("");

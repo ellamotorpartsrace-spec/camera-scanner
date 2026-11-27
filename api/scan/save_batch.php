@@ -112,7 +112,8 @@ $results = [
     "duplicates" => 0,
     "errors" => 0,
     "pouch_saved" => 0,
-    "bulky_saved" => 0
+    "bulky_saved" => 0,
+    "cargo_saved" => 0
 ];
 
 try {
@@ -244,6 +245,8 @@ try {
             $results["saved"]++;
             if ($parcelSize === 'BULKY') {
                 $results["bulky_saved"]++;
+            } elseif ($parcelSize === 'CARGO') {
+                $results["cargo_saved"]++;
             } else {
                 $results["pouch_saved"]++;
             }
