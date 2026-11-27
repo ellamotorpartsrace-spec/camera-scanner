@@ -242,7 +242,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     /* Stats Row */
     .stats-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 10px;
       margin-top: 1rem;
     }
@@ -446,6 +446,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
           <select id="parcelSizeSelect">
             <option value="POUCH">Pouch</option>
             <option value="BULKY">Bulky</option>
+            <option value="CARGO">Cargo</option>
           </select>
         </div>
       </div>
@@ -510,6 +511,10 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
         <div class="stat-box">
           <span class="stat-label">Bulky</span>
           <strong id="bulky-count" class="stat-value">0</strong>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Cargo</span>
+          <strong id="cargo-count" class="stat-value">0</strong>
         </div>
       </div>
 
