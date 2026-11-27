@@ -77,7 +77,7 @@ if (!in_array($courier, $allowedCouriers, true)) {
     $courier = '';
 }
 
-$allowedSizes = ['POUCH', 'BULKY'];
+$allowedSizes = ['POUCH', 'BULKY', 'CARGO'];
 if (!in_array($parcelSize, $allowedSizes, true)) {
     $parcelSize = 'POUCH';
 }
