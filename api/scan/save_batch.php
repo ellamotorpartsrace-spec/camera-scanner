@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../core/db.php';
+require_once __DIR__ . '/../core/schema.php';
 
 // ── Robust input reader ──
 $rawInput = '';
@@ -117,6 +118,13 @@ $results = [
 ];
 
 try {
+    foreach ($scans as $scanItem) {
+        if (strtoupper(trim($scanItem['parcel_size'] ?? '')) === 'CARGO') {
+            ensureCargoSizeSupported($pdo);
+            break;
+        }
+    }
+
     $pdo->beginTransaction();
 
     // Generate chronological Batch ID for today (e.g. BATCH-1, BATCH-2)
@@ -273,7 +281,7 @@ try {
         "results" => $results
     ]);
 
-} catch (PDOException $e) {
+} catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }

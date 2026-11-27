@@ -32,7 +32,7 @@ CREATE TABLE `scans` (
   `code_value` varchar(255) NOT NULL,
   `code_type` enum('QR','BARCODE','MANUAL','UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
   `courier` varchar(50) DEFAULT NULL,
-  `parcel_size` enum('POUCH','BULKY') DEFAULT 'POUCH',
+  `parcel_size` enum('POUCH','BULKY','CARGO') DEFAULT 'POUCH',
   `platform` enum('Lazada','TikTok','Shopee','') NOT NULL DEFAULT '',
   `gs1_gtin` varchar(20) DEFAULT NULL,
   `gs1_batch` varchar(50) DEFAULT NULL,
