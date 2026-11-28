@@ -135,6 +135,7 @@ const CourierDetector = {
   getBadge(courierName) {
     const c = (courierName || "").toLowerCase();
     if (c.includes("flash")) return { class: "badge-flash", icon: "⚡", label: "Flash" };
+    if (c.includes("cargo")) return { class: "badge-jnt", icon: "📦", label: "J&T Cargo" };
     if (c.includes("jnt") || c.includes("j&t")) return { class: "badge-jnt", icon: "🔴", label: "J&T" };
     if (c.includes("shopee")) return { class: "badge-shopee", icon: "🟠", label: "SPX" };
     if (c.includes("lazada")) return { class: "badge-lex", icon: "🔵", label: "LEX" };
@@ -191,7 +192,6 @@ let scanCount = 0;
 let successScanCount = 0;
 let pouchCount = 0;
 let bulkyCount = 0;
-let cargoCount = 0;
 
 /* ══════════════════════════════════════════
    INIT
@@ -708,7 +708,6 @@ async function executeScan(scanData, type) {
   } else {
     successScanCount++;
     if (parcelSize === "BULKY") bulkyCount++;
-    else if (parcelSize === "CARGO") cargoCount++;
     else pouchCount++;
     updateCounterUI();
 
@@ -786,7 +785,6 @@ function updateCounterUI() {
   set("success-scan-count", successScanCount);
   set("pouch-count", pouchCount);
   set("bulky-count", bulkyCount);
-  set("cargo-count", cargoCount);
 }
 
 function restoreCounterUI() { updateCounterUI(); }
@@ -800,7 +798,6 @@ function loadSession() {
       successScanCount = d.successScanCount || 0;
       pouchCount = d.pouchCount || 0;
       bulkyCount = d.bulkyCount || 0;
-      cargoCount = d.cargoCount || 0;
     }
 
     const rawRecent = localStorage.getItem("smartRecentScans");
@@ -818,7 +815,7 @@ function loadSession() {
 function saveSession() {
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify({
-      scanCount, successScanCount, pouchCount, bulkyCount, cargoCount
+      scanCount, successScanCount, pouchCount, bulkyCount
     }));
   } catch (e) { console.error("Session save:", e); }
 }
@@ -834,7 +831,7 @@ function clearSession() {
   batchQueue = [];
   offlineQueue = [];
   
-  scanCount = successScanCount = pouchCount = bulkyCount = cargoCount = 0;
+  scanCount = successScanCount = pouchCount = bulkyCount = 0;
   updateCounterUI();
   updateBatchUI();
   
@@ -1111,7 +1108,6 @@ async function submitBatch() {
     successScanCount += r.saved;
     pouchCount += r.pouch_saved || 0;
     bulkyCount += r.bulky_saved || 0;
-    cargoCount += r.cargo_saved || 0;
     updateCounterUI();
     saveSession();
     
@@ -1144,7 +1140,6 @@ async function syncOfflineQueue() {
     successScanCount += r.saved;
     pouchCount += r.pouch_saved || 0;
     bulkyCount += r.bulky_saved || 0;
-    cargoCount += r.cargo_saved || 0;
     updateCounterUI();
     saveSession();
     

@@ -75,6 +75,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
                         <select id="courierSelect">
                             <option value="">-- Select Courier --</option>
                             <option value="JNT Express">JNT Express</option>
+                            <option value="J&T Cargo">J&T Cargo</option>
                             <option value="Shopee Express">Shopee Express</option>
                             <option value="Lazada Express">Lazada Express</option>
                             <option value="Flash Express">Flash Express</option>

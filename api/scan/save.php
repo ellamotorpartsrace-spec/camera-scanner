@@ -11,7 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../core/db.php';
-require_once __DIR__ . '/../core/schema.php';
 
 // ── Robust input reader ──
 $rawInput = '';
@@ -73,12 +72,12 @@ if (!in_array($codeType, $allowedTypes, true)) {
     $codeType = 'UNKNOWN';
 }
 
-$allowedCouriers = ['JNT Express', 'LBC', 'Shopee Express', 'Lazada Express', 'Flash Express', 'Ninja Van', 'Others', ''];
+$allowedCouriers = ['JNT Express', 'J&T Cargo', 'LBC', 'Shopee Express', 'Lazada Express', 'Flash Express', 'Ninja Van', 'Others', ''];
 if (!in_array($courier, $allowedCouriers, true)) {
     $courier = '';
 }
 
-$allowedSizes = ['POUCH', 'BULKY', 'CARGO'];
+$allowedSizes = ['POUCH', 'BULKY'];
 if (!in_array($parcelSize, $allowedSizes, true)) {
     $parcelSize = 'POUCH';
 }
@@ -95,10 +94,6 @@ $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
 $isReturn = (bool) ($data['is_return'] ?? false);
 
 try {
-    if ($parcelSize === 'CARGO') {
-        ensureCargoSizeSupported($pdo);
-    }
-
     $sql = "
         INSERT INTO scans (
             code_value,
@@ -158,15 +153,10 @@ try {
 
     $isDuplicate = ($stmt->rowCount() !== 1);
 
-    $fetchSql = "SELECT id, parcel_size, update_count, created_at, scanned_at, returned_at FROM scans WHERE code_value = :code";
+    $fetchSql = "SELECT id, update_count, created_at, scanned_at, returned_at FROM scans WHERE code_value = :code";
     $fetchStmt = $pdo->prepare($fetchSql);
     $fetchStmt->execute([":code" => $codeValue]);
     $scanRecord = $fetchStmt->fetch();
-
-    $storedSize = strtoupper(trim((string) ($scanRecord['parcel_size'] ?? '')));
-    if ($parcelSize === 'CARGO' && $storedSize !== 'CARGO') {
-        throw new RuntimeException("Database column parcel_size did not store CARGO (stored: '{$storedSize}'). Please check ALTER privileges on scans table.");
-    }
 
     $historySQL = "
         INSERT INTO scan_history (
@@ -200,7 +190,7 @@ try {
             "code" => $codeValue,
             "type" => $codeType,
             "courier" => $courier,
-            "parcel_size" => $storedSize ?: $parcelSize,
+            "parcel_size" => $parcelSize,
             "platform" => $platform,
             "timestamp" => date('c'),
             "update_count" => (int) $scanRecord['update_count'],
@@ -209,7 +199,7 @@ try {
             "returned_at" => $scanRecord['returned_at']
         ]
     ]);
-} catch (Throwable $e) {
+} catch (PDOException $e) {
     error_log("SAVE ERROR: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([

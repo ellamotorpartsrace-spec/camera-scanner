@@ -11,7 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../core/db.php';
-require_once __DIR__ . '/../core/schema.php';
 
 // ── Robust input reader ──
 $rawInput = '';
@@ -113,18 +112,10 @@ $results = [
     "duplicates" => 0,
     "errors" => 0,
     "pouch_saved" => 0,
-    "bulky_saved" => 0,
-    "cargo_saved" => 0
+    "bulky_saved" => 0
 ];
 
 try {
-    foreach ($scans as $scanItem) {
-        if (strtoupper(trim($scanItem['parcel_size'] ?? '')) === 'CARGO') {
-            ensureCargoSizeSupported($pdo);
-            break;
-        }
-    }
-
     $pdo->beginTransaction();
 
     // Generate chronological Batch ID for today (e.g. BATCH-1, BATCH-2)
@@ -217,10 +208,10 @@ try {
         $allowedTypes = ['QR', 'BARCODE', 'MANUAL'];
         if (!in_array($codeType, $allowedTypes, true)) $codeType = 'UNKNOWN';
 
-        $allowedCouriers = ['JNT Express', 'LBC', 'Shopee Express', 'Lazada Express', 'Flash Express', 'Ninja Van', 'Others', ''];
+        $allowedCouriers = ['JNT Express', 'J&T Cargo', 'LBC', 'Shopee Express', 'Lazada Express', 'Flash Express', 'Ninja Van', 'Others', ''];
         if (!in_array($courier, $allowedCouriers, true)) $courier = '';
 
-        $allowedSizes = ['POUCH', 'BULKY', 'CARGO'];
+        $allowedSizes = ['POUCH', 'BULKY'];
         if (!in_array($parcelSize, $allowedSizes, true)) $parcelSize = 'POUCH';
 
         $allowedPlatforms = ['Lazada', 'TikTok', 'Shopee', ''];
@@ -253,8 +244,6 @@ try {
             $results["saved"]++;
             if ($parcelSize === 'BULKY') {
                 $results["bulky_saved"]++;
-            } elseif ($parcelSize === 'CARGO') {
-                $results["cargo_saved"]++;
             } else {
                 $results["pouch_saved"]++;
             }
@@ -281,7 +270,7 @@ try {
         "results" => $results
     ]);
 
-} catch (Throwable $e) {
+} catch (PDOException $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }

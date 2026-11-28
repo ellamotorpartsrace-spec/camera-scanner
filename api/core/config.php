@@ -20,6 +20,7 @@ return [
     'lists' => [
         'couriers' => [
             'JNT Express',
+            'J&T Cargo',
             'LBC',
             'Shopee Express',
             'Lazada Express',

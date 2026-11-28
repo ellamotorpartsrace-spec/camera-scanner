@@ -23,7 +23,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     document.documentElement.classList.add(t === 'light' ? 'light-mode' : 'dark-mode');
   </script>
   <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
-  <link rel="stylesheet" href="css/scanner.css?v=42" />
+  <link rel="stylesheet" href="css/scanner.css?v=43" />
 
   <!-- Force SW & Cache Reset v15: clears any stuck old service workers -->
   <script>
@@ -242,7 +242,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     /* Stats Row */
     .stats-row {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
       margin-top: 1rem;
     }
@@ -426,6 +426,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
           <select id="courierSelect">
             <option value="">-- Select Courier --</option>
             <option value="JNT Express">JNT Express</option>
+            <option value="J&T Cargo">J&T Cargo</option>
             <option value="Shopee Express" selected>Shopee Express</option>
             <option value="Lazada Express">Lazada Express</option>
             <option value="Flash Express">Flash Express</option>
@@ -446,7 +447,6 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
           <select id="parcelSizeSelect">
             <option value="POUCH">Pouch</option>
             <option value="BULKY">Bulky</option>
-            <option value="CARGO">Cargo</option>
           </select>
         </div>
       </div>
@@ -512,10 +512,6 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
           <span class="stat-label">Bulky</span>
           <strong id="bulky-count" class="stat-value">0</strong>
         </div>
-        <div class="stat-box">
-          <span class="stat-label">Cargo</span>
-          <strong id="cargo-count" class="stat-value">0</strong>
-        </div>
       </div>
 
       <!-- History -->
@@ -568,8 +564,8 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     }
   </script>
 
-  <script src="js/sound.js?v=42"></script>
-  <script src="js/scanner-smart.js?v=42"></script>
+  <script src="js/sound.js?v=43"></script>
+  <script src="js/scanner-smart.js?v=43"></script>
 
 </body>
 

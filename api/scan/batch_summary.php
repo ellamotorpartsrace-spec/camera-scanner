@@ -74,8 +74,7 @@ try {
             IFNULL(gs1_batch, 'NORMAL') as id, 
             COUNT(*) as count,
             SUM(IF(parcel_size = 'POUCH', 1, 0)) as pouch_count,
-            SUM(IF(parcel_size = 'BULKY', 1, 0)) as bulky_count,
-            SUM(IF(parcel_size = 'CARGO', 1, 0)) as cargo_count
+            SUM(IF(parcel_size = 'BULKY', 1, 0)) as bulky_count
         FROM scans 
         WHERE $whereStr 
         GROUP BY IFNULL(gs1_batch, 'NORMAL') 
@@ -94,8 +93,7 @@ try {
                 "id" => "NORMAL",
                 "count" => (int)$b['count'],
                 "pouch_count" => (int)$b['pouch_count'],
-                "bulky_count" => (int)$b['bulky_count'],
-                "cargo_count" => (int)$b['cargo_count']
+                "bulky_count" => (int)$b['bulky_count']
             ];
         } else {
             $batchNum = (int)str_replace("BATCH-", "", $b['id']);
@@ -103,8 +101,7 @@ try {
                 "id" => $batchNum,
                 "count" => (int)$b['count'],
                 "pouch_count" => (int)$b['pouch_count'],
-                "bulky_count" => (int)$b['bulky_count'],
-                "cargo_count" => (int)$b['cargo_count']
+                "bulky_count" => (int)$b['bulky_count']
             ];
         }
     }
