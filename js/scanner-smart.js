@@ -152,7 +152,7 @@ function speakVoice(text) {
       msg.pitch = 1.0;
       msg.lang = 'en-US';
       window.speechSynthesis.speak(msg);
-    } catch(e) {
+    } catch (e) {
       console.warn("Speech synthesis error", e);
     }
   }
@@ -241,8 +241,8 @@ window.addEventListener("load", () => {
     }
     const updateAutoDetectUI = (active) => {
       if (autoLabel) {
-        autoLabel.innerHTML = active 
-          ? '⚡ Auto-Detect <span style="font-size:0.6rem; background:#f59e0b; color:#000; padding:1px 5px; border-radius:10px; font-weight:900;">ON</span>' 
+        autoLabel.innerHTML = active
+          ? '⚡ Auto-Detect <span style="font-size:0.6rem; background:#f59e0b; color:#000; padding:1px 5px; border-radius:10px; font-weight:900;">ON</span>'
           : '⚡ Auto-Detect';
       }
     };
@@ -281,10 +281,10 @@ let isTorchOn = false;
 
 function toggleTorch() {
   if (!scannerInstance) return;
-  
+
   isTorchOn = !isTorchOn;
   const btn = document.getElementById("torchBtn");
-  
+
   try {
     scannerInstance.applyVideoConstraints({
       advanced: [{ torch: isTorchOn }]
@@ -296,7 +296,7 @@ function toggleTorch() {
       isTorchOn = false;
       if (btn) btn.style.background = "rgba(0,0,0,0.6)";
     });
-  } catch(e) {
+  } catch (e) {
     console.warn("Torch API error", e);
   }
 }
@@ -380,7 +380,7 @@ function finalizeStart() {
 let scanTimeoutTimer = null;
 let resumeTimeoutTimer = null;
 
-window.triggerManualScan = function() {
+window.triggerManualScan = function () {
   // Clear any pending UI resets from previous scans
   clearTimeout(resumeTimeoutTimer);
 
@@ -390,15 +390,15 @@ window.triggerManualScan = function() {
     updateStatus("Scan cancelled.");
     return;
   }
-  
+
   // Haptic feedback for hardware-like feel
   if (navigator.vibrate) navigator.vibrate(50);
-  
+
   isScanning = true;
   candidateCode = null;
   candidateCount = 0;
   lastValue = ""; // IMPORTANT: Clear last value so they can deliberately rescan the same package!
-  
+
   const btn = document.getElementById("manualScanBtn");
   if (btn) {
     btn.innerHTML = "⏳ SCANNING...";
@@ -406,13 +406,13 @@ window.triggerManualScan = function() {
     btn.style.boxShadow = "0 4px 15px rgba(234, 179, 8, 0.4)";
     btn.classList.remove("btn-pulse-idle"); // Stop animation while scanning
   }
-  
+
   // Make laser line visible
   const laser = document.querySelector(".laser-line");
   if (laser) laser.style.display = "block";
 
   updateStatus("Scanning... Point at barcode");
-  
+
   // Timeout after 8 seconds if nothing is found (gives them more time to focus)
   clearTimeout(scanTimeoutTimer);
   scanTimeoutTimer = setTimeout(() => {
@@ -431,7 +431,7 @@ function stopManualScan() {
     btn.style.background = "#22c55e"; // Green
     btn.style.boxShadow = "0 4px 15px rgba(34, 197, 94, 0.4)";
   }
-  
+
   // Hide laser
   const laser = document.querySelector(".laser-line");
   if (laser) laser.style.display = "none";
@@ -545,7 +545,7 @@ function onDecoded(decodedText, decodedResult) {
   candidateCode = null;
   candidateCount = 0;
   clearTimeout(candidateTimer);
-  
+
   clearTimeout(scanTimeoutTimer);
   stopManualScan();
 
@@ -674,7 +674,7 @@ async function executeScan(scanData, type) {
   scanFd.append("payload", JSON.stringify(scanData));
   try {
     res = await fetch(API_ENDPOINT, { method: "POST", body: scanFd });
-  } catch(fetchErr) {
+  } catch (fetchErr) {
     // Network Error (Offline)
     offlineQueue.push(scanData);
     saveQueues();
@@ -689,7 +689,7 @@ async function executeScan(scanData, type) {
     return;
   }
 
-  try { data = await res.json(); } catch(e) { throw new Error(`Server returned HTTP ${res.status} without JSON.`); }
+  try { data = await res.json(); } catch (e) { throw new Error(`Server returned HTTP ${res.status} without JSON.`); }
 
   if (!res.ok || data.status === "error") {
     throw new Error(data.message || `HTTP ${res.status} Error`);
@@ -826,15 +826,15 @@ function clearSession() {
   localStorage.removeItem("smartRecentScans");
   localStorage.removeItem("smartBatchQueue");
   localStorage.removeItem("smartOfflineQueue");
-  
+
   recentScans = [];
   batchQueue = [];
   offlineQueue = [];
-  
+
   scanCount = successScanCount = pouchCount = bulkyCount = 0;
   updateCounterUI();
   updateBatchUI();
-  
+
   const hl = document.getElementById("historyList");
   if (hl) hl.innerHTML = '<li class="placeholder">No scans yet</li>';
   flash("success");
@@ -851,7 +851,7 @@ function pushHistory(value, type, duplicate = false, data = {}) {
   recentScans.unshift({ value, type, duplicate, data });
   if (recentScans.length > 50) recentScans.pop();
   localStorage.setItem("smartRecentScans", JSON.stringify(recentScans));
-  
+
   // Render to DOM
   renderHistoryDOM(value, type, duplicate, data);
 }
@@ -926,7 +926,7 @@ function loadQueues() {
       const parsedO = JSON.parse(o);
       offlineQueue = Array.isArray(parsedO) ? parsedO : [];
     }
-  } catch(e) {
+  } catch (e) {
     console.warn("Failed to load queues from localStorage, resetting.", e);
     batchQueue = [];
     offlineQueue = [];
@@ -944,7 +944,7 @@ function saveQueues() {
 function updateBatchUI() {
   const bCount = document.getElementById("batch-submit-count");
   if (bCount) bCount.innerText = batchQueue.length;
-  
+
   const oBanner = document.getElementById("offline-banner");
   const oCount = document.getElementById("offline-count");
   if (oBanner && oCount) {
@@ -968,7 +968,7 @@ async function fetchSubmittedBatches() {
     const data = await res.json();
     if (data.status === "success" && data.data.length > 0) {
       submittedBatches = data.data.filter(b => b.id !== 'NORMAL');
-      
+
       if (submittedBatches.length > 0) {
         list.innerHTML = submittedBatches.map(b => `
           <li style="background: #ffffff; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
@@ -1017,8 +1017,8 @@ async function postPayload(url, payloadStr) {
     });
     const rawText = await res.text();
     let data;
-    try { data = JSON.parse(rawText); } catch(e) { throw new Error("Server response not JSON: " + rawText.substring(0, 200)); }
-    
+    try { data = JSON.parse(rawText); } catch (e) { throw new Error("Server response not JSON: " + rawText.substring(0, 200)); }
+
     if (res.ok && data && data.status !== "error") {
       return data;
     }
@@ -1038,8 +1038,8 @@ async function postPayload(url, payloadStr) {
     const res = await fetch(url, { method: "POST", body: fd });
     const rawText = await res.text();
     let data;
-    try { data = JSON.parse(rawText); } catch(e) { throw new Error("Server response not JSON: " + rawText.substring(0, 200)); }
-    
+    try { data = JSON.parse(rawText); } catch (e) { throw new Error("Server response not JSON: " + rawText.substring(0, 200)); }
+
     if (res.ok && data && data.status !== "error") {
       return data;
     }
@@ -1060,7 +1060,7 @@ async function postPayload(url, payloadStr) {
   });
   const rawText = await res.text();
   let data;
-  try { data = JSON.parse(rawText); } catch(e) { throw new Error("Server response not JSON: " + rawText.substring(0, 200)); }
+  try { data = JSON.parse(rawText); } catch (e) { throw new Error("Server response not JSON: " + rawText.substring(0, 200)); }
 
   if (!res.ok || data.status === "error") {
     const diag = data && data.raw_len !== undefined ? `\n\n[Debug] raw_len:${data.raw_len} post_keys:${JSON.stringify(data.post_keys)} ct:${data.content_type}` : '';
@@ -1081,7 +1081,7 @@ async function submitBatch() {
     alert("Batch is empty!");
     return;
   }
-  
+
   const submitBtn = document.getElementById("submitBatchBtn");
   if (submitBtn) submitBtn.innerText = "🚀 Uploading...";
 
@@ -1104,13 +1104,13 @@ async function submitBatch() {
 
     const r = data.results;
     alert(`Batch Complete!\n\nSaved: ${r.saved}\nDuplicates: ${r.duplicates}\nErrors: ${r.errors}`);
-    
+
     successScanCount += r.saved;
     pouchCount += r.pouch_saved || 0;
     bulkyCount += r.bulky_saved || 0;
     updateCounterUI();
     saveSession();
-    
+
     batchQueue = [];
     saveQueues();
     fetchSubmittedBatches();
@@ -1129,10 +1129,10 @@ async function syncOfflineQueue() {
     saveQueues();
   }
   if (offlineQueue.length === 0) return;
-  
+
   updateStatus(`Syncing ${offlineQueue.length} offline scans...`);
   const scansToSync = [...offlineQueue];
-  
+
   try {
     const data = await postPayload("api/scan/save_batch.php", JSON.stringify({ scans: scansToSync }));
 
@@ -1142,12 +1142,12 @@ async function syncOfflineQueue() {
     bulkyCount += r.bulky_saved || 0;
     updateCounterUI();
     saveSession();
-    
+
     offlineQueue = [];
     saveQueues();
     updateStatus("✅ Offline Scans Synced");
     setTimeout(() => updateStatus("Ready – point at a QR or barcode"), 3000);
-  } catch(err) {
+  } catch (err) {
     console.error("Offline sync failed, will retry later.", err);
     updateStatus("⚠️ Sync Failed - will retry");
   }
