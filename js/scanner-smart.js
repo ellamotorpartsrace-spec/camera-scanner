@@ -68,13 +68,13 @@ const CourierDetector = {
       icon: "🔴"
     },
     {
-      id: "tiktok_jnt",
-      courier: "J&T Express",
+      id: "tiktok_jnt_cargo",
+      courier: "J&T Cargo",
       platform: "TikTok",
       regex: /^JT[0-9A-Z]{8,20}/i,
-      name: "J&T Express (TikTok)",
+      name: "J&T Cargo (TikTok)",
       badgeClass: "badge-jnt",
-      icon: "🔴"
+      icon: "📦"
     },
     {
       id: "lazada_lex",
