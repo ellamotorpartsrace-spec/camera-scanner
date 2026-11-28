@@ -60,7 +60,7 @@ const CourierDetector = {
     },
     {
       id: "lazada_jnt",
-      courier: "JNT Express",
+      courier: "J&T Express",
       platform: "Lazada",
       regex: /^8[2-5]\d{10}$/,
       name: "J&T Express (Lazada)",
@@ -69,7 +69,7 @@ const CourierDetector = {
     },
     {
       id: "tiktok_jnt",
-      courier: "JNT Express",
+      courier: "J&T Express",
       platform: "TikTok",
       regex: /^JT[0-9A-Z]{8,20}/i,
       name: "J&T Express (TikTok)",
@@ -87,7 +87,7 @@ const CourierDetector = {
     },
     {
       id: "general_jnt",
-      courier: "JNT Express",
+      courier: "J&T Express",
       platform: null,
       regex: /^[789]\d{11}$/,
       name: "J&T Express",

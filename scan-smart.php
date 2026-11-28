@@ -23,7 +23,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     document.documentElement.classList.add(t === 'light' ? 'light-mode' : 'dark-mode');
   </script>
   <script src="https://unpkg.com/html5-qrcode/html5-qrcode.min.js"></script>
-  <link rel="stylesheet" href="css/scanner.css?v=43" />
+  <link rel="stylesheet" href="css/scanner.css?v=44" />
 
   <!-- Force SW & Cache Reset v15: clears any stuck old service workers -->
   <script>
@@ -425,7 +425,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
           </div>
           <select id="courierSelect">
             <option value="">-- Select Courier --</option>
-            <option value="JNT Express">JNT Express</option>
+            <option value="J&T Express">J&T Express</option>
             <option value="J&T Cargo">J&T Cargo</option>
             <option value="Shopee Express" selected>Shopee Express</option>
             <option value="Lazada Express">Lazada Express</option>
@@ -564,8 +564,8 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     }
   </script>
 
-  <script src="js/sound.js?v=43"></script>
-  <script src="js/scanner-smart.js?v=43"></script>
+  <script src="js/sound.js?v=44"></script>
+  <script src="js/scanner-smart.js?v=44"></script>
 
 </body>
 

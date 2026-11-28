@@ -72,7 +72,7 @@ if (!in_array($codeType, $allowedTypes, true)) {
     $codeType = 'UNKNOWN';
 }
 
-$allowedCouriers = ['JNT Express', 'J&T Cargo', 'LBC', 'Shopee Express', 'Lazada Express', 'Flash Express', 'Ninja Van', 'Others', ''];
+$allowedCouriers = ['J&T Express', 'JNT Express', 'J&T Cargo', 'LBC', 'Shopee Express', 'Lazada Express', 'Flash Express', 'Ninja Van', 'Others', ''];
 if (!in_array($courier, $allowedCouriers, true)) {
     $courier = '';
 }
