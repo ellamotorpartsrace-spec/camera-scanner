@@ -84,24 +84,72 @@ try {
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
+    // Fetch per-batch platform and courier breakdowns
+    $detailSql = "
+        SELECT
+            IFNULL(gs1_batch, 'NORMAL') as batch_id,
+            COALESCE(NULLIF(platform, ''), 'Unassigned') as platform_name,
+            COALESCE(NULLIF(courier, ''), 'Unassigned') as courier_name,
+            COUNT(*) as cnt,
+            SUM(IF(parcel_size = 'POUCH', 1, 0)) as pouch_cnt,
+            SUM(IF(parcel_size = 'BULKY', 1, 0)) as bulky_cnt
+        FROM scans
+        WHERE $whereStr
+        GROUP BY IFNULL(gs1_batch, 'NORMAL'), COALESCE(NULLIF(platform, ''), 'Unassigned'), COALESCE(NULLIF(courier, ''), 'Unassigned')
+    ";
+    $detailStmt = $pdo->prepare($detailSql);
+    $detailStmt->execute($params);
+    $details = $detailStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $batchPlatforms = [];
+    $batchCouriers = [];
+    foreach ($details as $d) {
+        $bid = $d['batch_id'];
+        $pName = $d['platform_name'];
+        $cName = $d['courier_name'];
+        $cnt = (int)$d['cnt'];
+        $pouch = (int)$d['pouch_cnt'];
+        $bulky = (int)$d['bulky_cnt'];
+
+        if (!isset($batchPlatforms[$bid][$pName])) {
+            $batchPlatforms[$bid][$pName] = 0;
+        }
+        $batchPlatforms[$bid][$pName] += $cnt;
+
+        if (!isset($batchCouriers[$bid][$cName])) {
+            $batchCouriers[$bid][$cName] = ['count' => 0, 'pouch' => 0, 'bulky' => 0];
+        }
+        $batchCouriers[$bid][$cName]['count'] += $cnt;
+        $batchCouriers[$bid][$cName]['pouch'] += $pouch;
+        $batchCouriers[$bid][$cName]['bulky'] += $bulky;
+    }
+
     // Clean up output to match JS expected format
     $formatted = [];
     foreach ($batches as $b) {
-        if ($b['id'] === 'NORMAL') {
+        $rawId = $b['id'];
+        $platforms = $batchPlatforms[$rawId] ?? new stdClass();
+        $couriers = $batchCouriers[$rawId] ?? new stdClass();
+
+        if ($rawId === 'NORMAL') {
             $formatted[] = [
                 "id" => "NORMAL",
                 "count" => (int)$b['count'],
                 "pouch_count" => (int)$b['pouch_count'],
-                "bulky_count" => (int)$b['bulky_count']
+                "bulky_count" => (int)$b['bulky_count'],
+                "platforms" => $platforms,
+                "couriers" => $couriers
             ];
         } else {
-            $batchNum = (int)str_replace("BATCH-", "", $b['id']);
+            $batchNum = (int)str_replace("BATCH-", "", $rawId);
             $formatted[] = [
                 "id" => $batchNum,
                 "count" => (int)$b['count'],
                 "pouch_count" => (int)$b['pouch_count'],
-                "bulky_count" => (int)$b['bulky_count']
+                "bulky_count" => (int)$b['bulky_count'],
+                "platforms" => $platforms,
+                "couriers" => $couriers
             ];
         }
     }

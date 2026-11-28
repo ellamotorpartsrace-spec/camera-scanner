@@ -165,6 +165,36 @@ $config = require __DIR__ . '/api/core/config.php';
                 </div>
             </div>
 
+            <!-- By Platform -->
+            <div style="margin-bottom: 20px;">
+                <div style="font-size: 0.75rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">🛒 By Platform</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <div style="background: var(--card, #fff); padding: 14px 10px; border-radius: 12px; border-bottom: 3px solid #ec4899; box-shadow: 0 2px 6px rgba(0,0,0,0.05); text-align: center;">
+                        <div id="smPlatTikTok" style="font-size: 1.6rem; font-weight: 900; color: #ec4899; line-height: 1;">0</div>
+                        <div style="font-size: 0.72rem; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-top: 6px;">TikTok</div>
+                    </div>
+                    <div style="background: var(--card, #fff); padding: 14px 10px; border-radius: 12px; border-bottom: 3px solid #6366f1; box-shadow: 0 2px 6px rgba(0,0,0,0.05); text-align: center;">
+                        <div id="smPlatLazada" style="font-size: 1.6rem; font-weight: 900; color: #6366f1; line-height: 1;">0</div>
+                        <div style="font-size: 0.72rem; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-top: 6px;">Lazada</div>
+                    </div>
+                    <div style="background: var(--card, #fff); padding: 14px 10px; border-radius: 12px; border-bottom: 3px solid #f97316; box-shadow: 0 2px 6px rgba(0,0,0,0.05); text-align: center;">
+                        <div id="smPlatShopee" style="font-size: 1.6rem; font-weight: 900; color: #f97316; line-height: 1;">0</div>
+                        <div style="font-size: 0.72rem; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-top: 6px;">Shopee</div>
+                    </div>
+                </div>
+                <div id="smPlatUnassignedWrap" style="display: none; text-align: center; margin-top: 8px; font-size: 0.78rem; color: var(--muted);">
+                    Unassigned Platform: <strong id="smPlatUnassigned" style="color: var(--text, #e2e8f0);">0</strong>
+                </div>
+            </div>
+
+            <!-- By Courier -->
+            <div style="margin-bottom: 20px;">
+                <div style="font-size: 0.75rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">🚚 By Courier</div>
+                <div id="smCourierGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 12px; color: var(--muted); font-size: 0.85rem;">Loading...</div>
+                </div>
+            </div>
+
             <div class="table-wrap" style="border: none; max-height: unset; overflow-x: auto; overflow-y: hidden; border-radius: 8px; background: var(--card, #fff); box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                 <table class="summary-table" style="min-width: 400px; width: 100%;">
                     <thead style="background: var(--bg);">
@@ -672,13 +702,60 @@ $config = require __DIR__ . '/api/core/config.php';
             recalcSummaryTotals();
         }
 
+        let summaryBatchesData = [];
+
+        function escapeHtml(str) {
+            return String(str ?? "").replace(/[&<>"']/g, m => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[m]));
+        }
+
+        function getCourierAccent(name) {
+            const c = (name || "").toLowerCase();
+            if (c.includes("cargo")) return "#f59e0b";
+            if (c.includes("j&t") || c.includes("jnt")) return "#ef4444";
+            if (c.includes("shopee")) return "#f97316";
+            if (c.includes("lazada")) return "#3b82f6";
+            if (c.includes("flash")) return "#eab308";
+            if (c.includes("lbc")) return "#dc2626";
+            if (c.includes("ninja")) return "#ec4899";
+            return "#64748b";
+        }
+
         function recalcSummaryTotals() {
             let tScans = 0, tPouch = 0, tBulky = 0;
+            const platTotals = { TikTok: 0, Lazada: 0, Shopee: 0, Unassigned: 0 };
+            const courierTotals = {};
+
             const checkboxes = document.querySelectorAll('.sm-row-checkbox:checked');
             checkboxes.forEach(cb => {
                 tScans += parseInt(cb.getAttribute('data-scans') || 0);
                 tPouch += parseInt(cb.getAttribute('data-pouch') || 0);
                 tBulky += parseInt(cb.getAttribute('data-bulky') || 0);
+
+                const idx = parseInt(cb.getAttribute('data-index'));
+                const batchObj = summaryBatchesData[idx];
+                if (batchObj) {
+                    if (batchObj.platforms) {
+                        Object.entries(batchObj.platforms).forEach(([pName, cnt]) => {
+                            if (platTotals[pName] !== undefined) {
+                                platTotals[pName] += cnt;
+                            } else {
+                                platTotals.Unassigned += cnt;
+                            }
+                        });
+                    }
+                    if (batchObj.couriers) {
+                        Object.entries(batchObj.couriers).forEach(([cName, info]) => {
+                            if (!courierTotals[cName]) {
+                                courierTotals[cName] = { count: 0, pouch: 0, bulky: 0 };
+                            }
+                            courierTotals[cName].count += info.count || 0;
+                            courierTotals[cName].pouch += info.pouch || 0;
+                            courierTotals[cName].bulky += info.bulky || 0;
+                        });
+                    }
+                }
             });
             
             // Sync master checkbox
@@ -691,6 +768,33 @@ $config = require __DIR__ . '/api/core/config.php';
             document.getElementById("smTotalScans").innerText = tScans;
             document.getElementById("smTotalPouch").innerText = tPouch;
             document.getElementById("smTotalBulky").innerText = tBulky;
+
+            document.getElementById("smPlatTikTok").innerText = platTotals.TikTok;
+            document.getElementById("smPlatLazada").innerText = platTotals.Lazada;
+            document.getElementById("smPlatShopee").innerText = platTotals.Shopee;
+            const unassignedWrap = document.getElementById("smPlatUnassignedWrap");
+            if (platTotals.Unassigned > 0) {
+                document.getElementById("smPlatUnassigned").innerText = platTotals.Unassigned;
+                unassignedWrap.style.display = "block";
+            } else {
+                unassignedWrap.style.display = "none";
+            }
+
+            const courierGrid = document.getElementById("smCourierGrid");
+            const sortedCouriers = Object.entries(courierTotals).sort((a, b) => b[1].count - a[1].count);
+            if (sortedCouriers.length === 0) {
+                courierGrid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 12px; color: var(--muted); font-size: 0.85rem;">No courier scans selected</div>`;
+            } else {
+                courierGrid.innerHTML = sortedCouriers.map(([cName, info]) => {
+                    const accent = getCourierAccent(cName);
+                    return `
+                    <div style="background: var(--card, #fff); padding: 12px 14px; border-radius: 12px; border-left: 4px solid ${accent}; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px;">
+                        <div style="font-size: 0.78rem; font-weight: 800; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(cName)}">${escapeHtml(cName)}</div>
+                        <div style="font-size: 1.5rem; font-weight: 900; color: ${accent}; line-height: 1.1;">${info.count}</div>
+                        <div style="font-size: 0.72rem; color: var(--muted); font-weight: 600;">${info.pouch} Pouch · ${info.bulky} Bulky</div>
+                    </div>`;
+                }).join("");
+            }
         }
 
         async function openSummaryReport() {
@@ -706,7 +810,8 @@ $config = require __DIR__ . '/api/core/config.php';
                 document.getElementById('summaryModalDate').innerText = `(${from} - ${to})`;
             }
 
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: var(--muted)">Loading data...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--muted)">Loading data...</td></tr>`;
+            document.getElementById("smCourierGrid").innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 12px; color: var(--muted); font-size: 0.85rem;">Loading...</div>`;
             
             // Build URL with all current state filters
             let url = `api/scan/batch_summary.php?from=${from}&to=${to}`;
@@ -735,6 +840,7 @@ $config = require __DIR__ . '/api/core/config.php';
 
                 if (data.status === "success") {
                     const batches = data.data;
+                    summaryBatchesData = batches;
                     
                     let totalScans = 0;
                     let totalPouch = 0;
@@ -743,7 +849,7 @@ $config = require __DIR__ . '/api/core/config.php';
                     if (batches.length === 0) {
                         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--muted)">No batches found for this date range.</td></tr>`;
                     } else {
-                        tbody.innerHTML = batches.map(b => {
+                        tbody.innerHTML = batches.map((b, idx) => {
                             let badgeHtml = '';
                             if (b.id === "NORMAL") {
                                 badgeHtml = `<span class="badge" style="background:rgba(239, 68, 68, 0.15); color:#ef4444; font-family:monospace; font-size:0.85rem; border: 1px solid rgba(239, 68, 68, 0.3);">UNBATCHED</span>`;
@@ -754,7 +860,7 @@ $config = require __DIR__ . '/api/core/config.php';
                             return `
                             <tr style="border-bottom: 1px solid var(--border);">
                                 <td style="padding: 12px 16px; text-align:center;">
-                                    <input type="checkbox" class="sm-row-checkbox" checked data-scans="${b.count}" data-pouch="${b.pouch_count || 0}" data-bulky="${b.bulky_count || 0}" onclick="recalcSummaryTotals()">
+                                    <input type="checkbox" class="sm-row-checkbox" checked data-index="${idx}" data-scans="${b.count}" data-pouch="${b.pouch_count || 0}" data-bulky="${b.bulky_count || 0}" onclick="recalcSummaryTotals()">
                                 </td>
                                 <td style="padding: 12px 16px;">${badgeHtml}</td>
                                 <td style="text-align: center; padding: 12px 8px;"><span class="badge" style="background:rgba(34, 197, 94, 0.15); color:#22c55e; font-weight:800;">${b.count}</span></td>
