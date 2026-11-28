@@ -13,6 +13,7 @@ const SNAP_DELAY = 200;
 const SESSION_KEY = "smartScannerSession";
 const TRACK_FPS = 12;       // tracker frames per second
 const TRACK_MS = 1000 / TRACK_FPS;
+let courierLockedByUser = false;
 
 /* ── COLOURS ── */
 const CLR_QR = { stroke: "#22c55e", fill: "rgba(34,197,94,0.08)", text: "#22c55e", glow: "rgba(34,197,94,0.5)" };
@@ -232,6 +233,14 @@ window.addEventListener("load", () => {
       isBatchMode = batchToggle.checked;
       bText.innerText = isBatchMode ? "Batch: ON" : "Batch: OFF";
       if (batchAction) batchAction.style.display = isBatchMode ? "block" : "none";
+    });
+  }
+
+  // Track whether the user manually chose a courier so Auto-Detect won't overwrite it
+  const courierSelInit = document.getElementById("courierSelect");
+  if (courierSelInit) {
+    courierSelInit.addEventListener("change", () => {
+      courierLockedByUser = (courierSelInit.value !== "");
     });
   }
 
@@ -602,7 +611,7 @@ async function handleScan(value, type) {
     if (isAutoDetect) {
       const detected = CourierDetector.detect(value);
       if (detected) {
-        if (detected.courier) {
+        if (detected.courier && !courierLockedByUser) {
           courier = detected.courier;
           const cSel = document.getElementById("courierSelect");
           if (cSel && cSel.value !== courier) {
