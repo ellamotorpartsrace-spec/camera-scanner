@@ -117,7 +117,10 @@ const CourierDetector = {
       return { match: true, unknown: true }; // Unknown formats don't block
     }
 
-    const courierMatches = (detected.courier.toLowerCase() === selectedCourier.toLowerCase());
+    let courierMatches = (detected.courier.toLowerCase() === selectedCourier.toLowerCase());
+    if (detected.id === "tiktok_jnt_cargo" && (selectedCourier.toLowerCase() === "j&t express" || selectedCourier.toLowerCase() === "j&t cargo")) {
+      courierMatches = true;
+    }
 
     let platformMatches = true;
     if (selectedPlatform && detected.platform && detected.platform.toLowerCase() !== selectedPlatform.toLowerCase()) {
